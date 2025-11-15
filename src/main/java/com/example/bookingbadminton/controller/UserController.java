@@ -16,7 +16,6 @@ public class UserController {
     @GetMapping("/test")
     public ResponseEntity<?> getAllCategory(){
         ApiResponse api = new ApiResponse();
-//        api.setResult(categoryServiceImp.getListCategory());
-        return new ResponseEntity<>(api, HttpStatus.OK);
+        return ResponseEntity.accepted().build();
     }
 }
