@@ -17,7 +17,9 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ImageStation extends BaseModel {
     private UUID idStation;
+
     @Enumerated(EnumType.STRING)
     private TypeImage type;
+
     private String image;
 }
