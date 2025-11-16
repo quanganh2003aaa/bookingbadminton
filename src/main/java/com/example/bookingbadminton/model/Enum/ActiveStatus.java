@@ -1,5 +1,5 @@
 package com.example.bookingbadminton.model.Enum;
 
-public enum StationStatus {
+public enum ActiveStatus {
     ACTIVE, INACTIVE
 }

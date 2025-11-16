@@ -1,8 +1,10 @@
 package com.example.bookingbadminton.model.entity;
 
 import com.example.bookingbadminton.model.BaseModel;
-import com.example.bookingbadminton.model.Enum.StationStatus;
+import com.example.bookingbadminton.model.Enum.ActiveStatus;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,6 +24,9 @@ public class Station extends BaseModel {
     private String mobileContact;
     private String startTime;
     private String endTime;
-    private StationStatus active;
+
+    @Enumerated(EnumType.STRING)
+    private ActiveStatus active;
+
     private String linkMap;
 }

@@ -1,10 +1,7 @@
 package com.example.bookingbadminton.model.entity;
 
 import com.example.bookingbadminton.model.BaseModel;
-import com.example.bookingbadminton.model.Enum.InvoiceStatus;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,9 +12,9 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Invoice extends BaseModel {
-    private UUID idBooking;
-    private Integer price;
-    @Enumerated(EnumType.STRING)
-    private InvoiceStatus status;
+public class Comment extends BaseModel {
+    private UUID idUser;
+    private UUID idStation;
+    private Float rate;
+    private String content;
 }
