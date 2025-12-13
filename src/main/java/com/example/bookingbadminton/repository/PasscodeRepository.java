@@ -1,0 +1,9 @@
+package com.example.bookingbadminton.repository;
+
+import com.example.bookingbadminton.model.entity.Passcode;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.UUID;
+
+public interface PasscodeRepository extends JpaRepository<Passcode, UUID> {
+}

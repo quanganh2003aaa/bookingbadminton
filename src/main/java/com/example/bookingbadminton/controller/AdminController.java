@@ -1,8 +1,8 @@
 package com.example.bookingbadminton.controller;
 
-import com.example.bookingbadminton.model.entity.User;
+import com.example.bookingbadminton.model.entity.Admin;
 import com.example.bookingbadminton.payload.ApiResponse;
-import com.example.bookingbadminton.service.UserService;
+import com.example.bookingbadminton.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,42 +11,42 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/admins")
 @RequiredArgsConstructor
-public class UserController {
+public class AdminController {
 
-    private final UserService userService;
+    private final AdminService adminService;
 
     @GetMapping
     public ApiResponse list() {
-        return ApiResponse.builder().result(userService.findAll()).build();
+        return ApiResponse.builder().result(adminService.findAll()).build();
     }
 
     @GetMapping("/{id}")
     public ApiResponse get(@PathVariable UUID id) {
-        return ApiResponse.builder().result(userService.get(id)).build();
+        return ApiResponse.builder().result(adminService.get(id)).build();
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse> create(@RequestBody CreateUserRequest request) {
-        User saved = userService.create(request.accountId(), request.name(), request.avatar());
+    public ResponseEntity<ApiResponse> create(@RequestBody CreateAdminRequest request) {
+        Admin saved = adminService.create(request.accountId(), request.name());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.builder().result(saved).build());
     }
 
     @PutMapping("/{id}")
-    public ApiResponse update(@PathVariable UUID id, @RequestBody CreateUserRequest request) {
+    public ApiResponse update(@PathVariable UUID id, @RequestBody CreateAdminRequest request) {
         return ApiResponse.builder()
-                .result(userService.update(id, request.accountId(), request.name(), request.avatar()))
+                .result(adminService.update(id, request.accountId(), request.name()))
                 .build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        userService.delete(id);
+        adminService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
-    public record CreateUserRequest(UUID accountId, String name, String avatar) {
+    public record CreateAdminRequest(UUID accountId, String name) {
     }
 }
