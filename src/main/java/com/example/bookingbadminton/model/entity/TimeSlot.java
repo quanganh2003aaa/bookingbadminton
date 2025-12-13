@@ -1,11 +1,8 @@
 package com.example.bookingbadminton.model.entity;
 
 import com.example.bookingbadminton.model.BaseModel;
-import com.example.bookingbadminton.model.Enum.BookingStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -19,32 +16,23 @@ import lombok.ToString;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "booking")
+@Table(name = "time_slot")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Booking extends BaseModel {
+public class TimeSlot extends BaseModel {
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_field", nullable = false)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private Field field;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_user", nullable = false)
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    private User user;
-
-    @Column(length = 10)
-    private String msisdn;
-
-    @Column(name = "start_hour")
-    private LocalDateTime startHour;
+    private Integer price;
 
     @Column(name = "end_hour")
     private LocalDateTime endHour;
 
-    @Enumerated(EnumType.STRING)
-    private BookingStatus status;
+    @Column(name = "start_hour")
+    private LocalDateTime startHour;
 }

@@ -1,11 +1,7 @@
 package com.example.bookingbadminton.model.entity;
 
-import com.example.bookingbadminton.model.Enum.ActiveStatus;
-import com.example.bookingbadminton.model.Enum.TypePasscode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -23,11 +19,11 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "passcode")
+@Table(name = "token_blacklist")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Passcode {
+public class TokenBlacklist {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -38,18 +34,8 @@ public class Passcode {
     @EqualsAndHashCode.Exclude
     private Account account;
 
-    @Column(length = 6, nullable = false)
-    private String code;
+    private UUID jit;
 
-    @Enumerated(EnumType.STRING)
-    private TypePasscode type;
-
-    @Enumerated(EnumType.STRING)
-    private ActiveStatus active;
-
-    private LocalDateTime time;
-    @Column(name = "total_day")
-    private Integer totalDay;
-    @Column(name = "total_month")
-    private Integer totalMonth;
+    @Column(name = "expired_at")
+    private LocalDateTime expiredAt;
 }

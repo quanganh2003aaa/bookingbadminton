@@ -1,28 +1,33 @@
 package com.example.bookingbadminton.model.entity;
 
 import com.example.bookingbadminton.model.BaseModel;
-import com.example.bookingbadminton.model.Enum.LevelUser;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
+@Table(name = "user")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class User extends BaseModel {
-    private String password;
-    @Column(unique = true)
-    private String gmail;
-    @Column(unique = true)
-    private String msisdn;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_account", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Account account;
+
+    @Column(length = 50, nullable = false)
     private String name;
-    @Enumerated(EnumType.STRING)
-    private LevelUser level;
-    private Float rateLevel;
+
+    @Column(columnDefinition = "TEXT")
     private String avatar;
 }

@@ -1,7 +1,7 @@
 package com.example.bookingbadminton.model.entity;
 
 import com.example.bookingbadminton.model.BaseModel;
-import com.example.bookingbadminton.model.Enum.BookingStatus;
+import com.example.bookingbadminton.model.Enum.ActiveStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -16,35 +16,45 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Entity
-@Table(name = "booking")
+@Table(name = "field")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Booking extends BaseModel {
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_field", nullable = false)
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    private Field field;
+public class Field extends BaseModel {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_user", nullable = false)
+    @JoinColumn(name = "id_account", nullable = false)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    private User user;
+    private Account account;
+
+    @Column(length = 255, nullable = false)
+    private String name;
+
+    @Column(columnDefinition = "TEXT")
+    private String address;
+
+    @Column(name = "rate_point")
+    private Float ratePoint;
 
     @Column(length = 10)
     private String msisdn;
 
-    @Column(name = "start_hour")
-    private LocalDateTime startHour;
+    @Column(name = "mobile_contact", length = 10)
+    private String mobileContact;
 
-    @Column(name = "end_hour")
-    private LocalDateTime endHour;
+    @Column(name = "start_time")
+    private LocalTime startTime;
+
+    @Column(name = "end_time")
+    private LocalTime endTime;
 
     @Enumerated(EnumType.STRING)
-    private BookingStatus status;
+    private ActiveStatus active;
+
+    @Column(name = "link_map", columnDefinition = "TEXT")
+    private String linkMap;
 }

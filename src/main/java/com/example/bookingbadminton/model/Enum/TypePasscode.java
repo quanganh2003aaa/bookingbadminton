@@ -1,6 +1,6 @@
 package com.example.bookingbadminton.model.Enum;
 
 public enum TypePasscode {
-    forgot_passcode,
-    register_owner_code
+    FORGOT_PASSCODE,
+    REGISTER_OWNER_CODE
 }
