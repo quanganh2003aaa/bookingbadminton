@@ -26,10 +26,10 @@ import java.time.LocalTime;
 public class Field extends BaseModel {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_account", nullable = false)
+    @JoinColumn(name = "id_owner", nullable = false)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    private Account account;
+    private Owner owner;
 
     @Column(length = 255, nullable = false)
     private String name;

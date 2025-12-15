@@ -2,6 +2,7 @@ package com.example.bookingbadminton.service.impl;
 
 import com.example.bookingbadminton.model.entity.Account;
 import com.example.bookingbadminton.model.entity.User;
+import com.example.bookingbadminton.payload.UserRequest;
 import com.example.bookingbadminton.repository.AccountRepository;
 import com.example.bookingbadminton.repository.UserRepository;
 import com.example.bookingbadminton.service.UserService;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,32 +34,28 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User create(UUID accountId, String name, String avatar) {
-        Account account = accountRepository.findById(accountId)
+    public User create(UserRequest request) {
+        return saveUser(new User(), request);
+    }
+
+    @Override
+    public User update(UUID id, UserRequest request) {
+        return saveUser(get(id), request);
+    }
+
+    private User saveUser(User user, UserRequest request) {
+        Account account = accountRepository.findById(request.accountId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
-        User user = new User();
         user.setAccount(account);
-        user.setName(name);
-        user.setAvatar(avatar);
+        user.setName(request.name());
+        user.setAvatar(request.avatar());
         return userRepository.save(user);
     }
 
     @Override
-    public User update(UUID id, UUID accountId, String name, String avatar) {
-        User existing = get(id);
-        Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
-        existing.setAccount(account);
-        existing.setName(name);
-        existing.setAvatar(avatar);
-        return userRepository.save(existing);
-    }
-
-    @Override
     public void delete(UUID id) {
-        if (!userRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
-        }
-        userRepository.deleteById(id);
+        User user = get(id);
+        user.setDeletedAt(LocalDateTime.now());
+        userRepository.save(user);
     }
 }

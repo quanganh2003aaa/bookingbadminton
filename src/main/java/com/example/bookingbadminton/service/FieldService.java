@@ -1,9 +1,11 @@
 package com.example.bookingbadminton.service;
 
-import com.example.bookingbadminton.model.Enum.ActiveStatus;
 import com.example.bookingbadminton.model.entity.Field;
+import com.example.bookingbadminton.payload.FieldCardResponse;
+import com.example.bookingbadminton.payload.FieldRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -12,11 +14,11 @@ public interface FieldService {
 
     Field get(UUID id);
 
-    Field create(UUID accountId, String name, String address, Float ratePoint, String msisdn,
-                 String mobileContact, LocalTime startTime, LocalTime endTime, ActiveStatus active, String linkMap);
+    Field create(FieldRequest request);
 
-    Field update(UUID id, UUID accountId, String name, String address, Float ratePoint, String msisdn,
-                 String mobileContact, LocalTime startTime, LocalTime endTime, ActiveStatus active, String linkMap);
+    Field update(UUID id, FieldRequest request);
 
     void delete(UUID id);
+
+    Page<FieldCardResponse> search(String search, Pageable pageable);
 }

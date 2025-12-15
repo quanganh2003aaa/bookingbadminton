@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -55,9 +56,8 @@ public class FieldImageServiceImpl implements FieldImageService {
 
     @Override
     public void delete(UUID id) {
-        if (!fieldImageRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Field image not found");
-        }
-        fieldImageRepository.deleteById(id);
+        FieldImage entity = get(id);
+        entity.setDeletedAt(LocalDateTime.now());
+        fieldImageRepository.save(entity);
     }
 }

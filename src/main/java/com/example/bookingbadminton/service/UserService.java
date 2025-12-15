@@ -1,6 +1,7 @@
 package com.example.bookingbadminton.service;
 
 import com.example.bookingbadminton.model.entity.User;
+import com.example.bookingbadminton.payload.UserRequest;
 
 import java.util.List;
 import java.util.UUID;
@@ -10,9 +11,9 @@ public interface UserService {
 
     User get(UUID id);
 
-    User create(UUID accountId, String name, String avatar);
+    User create(UserRequest request);
 
-    User update(UUID id, UUID accountId, String name, String avatar);
+    User update(UUID id, UserRequest request);
 
     void delete(UUID id);
 }

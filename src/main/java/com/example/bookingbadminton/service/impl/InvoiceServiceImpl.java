@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -55,9 +56,8 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     public void delete(UUID id) {
-        if (!invoiceRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice not found");
-        }
-        invoiceRepository.deleteById(id);
+        Invoice invoice = get(id);
+        invoice.setDeletedAt(LocalDateTime.now());
+        invoiceRepository.save(invoice);
     }
 }

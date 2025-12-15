@@ -56,9 +56,8 @@ public class TimeSlotServiceImpl implements TimeSlotService {
 
     @Override
     public void delete(UUID id) {
-        if (!timeSlotRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Time slot not found");
-        }
-        timeSlotRepository.deleteById(id);
+        TimeSlot slot = get(id);
+        slot.setDeletedAt(LocalDateTime.now());
+        timeSlotRepository.save(slot);
     }
 }

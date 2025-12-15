@@ -2,7 +2,9 @@ package com.example.bookingbadminton.controller;
 
 import com.example.bookingbadminton.model.entity.User;
 import com.example.bookingbadminton.payload.ApiResponse;
+import com.example.bookingbadminton.payload.UserRequest;
 import com.example.bookingbadminton.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,17 +30,15 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse> create(@RequestBody CreateUserRequest request) {
-        User saved = userService.create(request.accountId(), request.name(), request.avatar());
+    public ResponseEntity<ApiResponse> create(@RequestBody @Valid UserRequest request) {
+        User saved = userService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.builder().result(saved).build());
     }
 
     @PutMapping("/{id}")
-    public ApiResponse update(@PathVariable UUID id, @RequestBody CreateUserRequest request) {
-        return ApiResponse.builder()
-                .result(userService.update(id, request.accountId(), request.name(), request.avatar()))
-                .build();
+    public ApiResponse update(@PathVariable UUID id, @RequestBody @Valid UserRequest request) {
+        return ApiResponse.builder().result(userService.update(id, request)).build();
     }
 
     @DeleteMapping("/{id}")
@@ -47,6 +47,4 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    public record CreateUserRequest(UUID accountId, String name, String avatar) {
-    }
 }

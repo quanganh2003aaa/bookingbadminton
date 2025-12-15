@@ -64,9 +64,8 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public void delete(UUID id) {
-        if (!bookingRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found");
-        }
-        bookingRepository.deleteById(id);
+        Booking booking = get(id);
+        booking.setDeletedAt(LocalDateTime.now());
+        bookingRepository.save(booking);
     }
 }
