@@ -13,7 +13,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "time_slot")
@@ -31,8 +31,8 @@ public class TimeSlot extends BaseModel {
     private Integer price;
 
     @Column(name = "end_hour")
-    private LocalDateTime endHour;
+    private LocalTime endHour;
 
     @Column(name = "start_hour")
-    private LocalDateTime startHour;
+    private LocalTime startHour;
 }

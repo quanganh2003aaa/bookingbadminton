@@ -33,22 +33,23 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     }
 
     @Override
-    public RefreshToken create(UUID accountId, String tokenHash, LocalDateTime expiredAt, Boolean revoked, LocalDateTime revokedAt) {
+    public RefreshToken create(UUID accountId, String hashToken, String refreshToken, LocalDateTime expiredAt, Boolean revoked, LocalDateTime revokedAt) {
         RefreshToken token = new RefreshToken();
-        return saveToken(token, accountId, tokenHash, expiredAt, revoked, revokedAt);
+        return saveToken(token, accountId, hashToken, refreshToken, expiredAt, revoked, revokedAt);
     }
 
     @Override
-    public RefreshToken update(UUID id, UUID accountId, String tokenHash, LocalDateTime expiredAt, Boolean revoked, LocalDateTime revokedAt) {
+    public RefreshToken update(UUID id, UUID accountId, String hashToken, String refreshToken, LocalDateTime expiredAt, Boolean revoked, LocalDateTime revokedAt) {
         RefreshToken token = get(id);
-        return saveToken(token, accountId, tokenHash, expiredAt, revoked, revokedAt);
+        return saveToken(token, accountId, hashToken, refreshToken, expiredAt, revoked, revokedAt);
     }
 
-    private RefreshToken saveToken(RefreshToken token, UUID accountId, String tokenHash, LocalDateTime expiredAt, Boolean revoked, LocalDateTime revokedAt) {
+    private RefreshToken saveToken(RefreshToken token, UUID accountId, String hashToken, String refreshToken, LocalDateTime expiredAt, Boolean revoked, LocalDateTime revokedAt) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
         token.setAccount(account);
-        token.setTokenHash(tokenHash);
+        token.setHashToken(hashToken);
+        token.setRefreshToken(refreshToken);
         token.setExpiredAt(expiredAt);
         token.setRevoked(revoked);
         token.setRevokedAt(revokedAt);

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,18 +34,18 @@ public class TimeSlotServiceImpl implements TimeSlotService {
     }
 
     @Override
-    public TimeSlot create(UUID fieldId, Integer price, LocalDateTime startHour, LocalDateTime endHour) {
+    public TimeSlot create(UUID fieldId, Integer price, LocalTime startHour, LocalTime endHour) {
         TimeSlot slot = new TimeSlot();
         return saveSlot(slot, fieldId, price, startHour, endHour);
     }
 
     @Override
-    public TimeSlot update(UUID id, UUID fieldId, Integer price, LocalDateTime startHour, LocalDateTime endHour) {
+    public TimeSlot update(UUID id, UUID fieldId, Integer price, LocalTime startHour, LocalTime endHour) {
         TimeSlot slot = get(id);
         return saveSlot(slot, fieldId, price, startHour, endHour);
     }
 
-    private TimeSlot saveSlot(TimeSlot slot, UUID fieldId, Integer price, LocalDateTime startHour, LocalDateTime endHour) {
+    private TimeSlot saveSlot(TimeSlot slot, UUID fieldId, Integer price, LocalTime startHour, LocalTime endHour) {
         Field field = fieldRepository.findById(fieldId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Field not found"));
         slot.setField(field);

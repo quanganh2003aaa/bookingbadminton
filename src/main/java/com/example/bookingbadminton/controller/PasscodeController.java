@@ -4,7 +4,13 @@ import com.example.bookingbadminton.model.Enum.ActiveStatus;
 import com.example.bookingbadminton.model.Enum.TypePasscode;
 import com.example.bookingbadminton.model.entity.Passcode;
 import com.example.bookingbadminton.payload.ApiResponse;
+import com.example.bookingbadminton.payload.RegisterOwnerPasscodeRequest;
 import com.example.bookingbadminton.service.PasscodeService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,22 +39,18 @@ public class PasscodeController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse> create(@RequestBody PasscodeRequest request) {
+    public ResponseEntity<ApiResponse> create(@RequestBody @Valid PasscodeRequest request) {
         Passcode saved = passcodeService.create(
                 request.accountId(),
                 request.code(),
-                request.type(),
-                request.active(),
-                request.time(),
-                request.totalDay(),
-                request.totalMonth()
+                request.type()
         );
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.builder().result(saved).build());
     }
 
     @PutMapping("/{id}")
-    public ApiResponse update(@PathVariable UUID id, @RequestBody PasscodeRequest request) {
+    public ApiResponse update(@PathVariable UUID id, @RequestBody @Valid PasscodeRequest request) {
         return ApiResponse.builder()
                 .result(passcodeService.update(
                         id,
@@ -70,13 +72,20 @@ public class PasscodeController {
     }
 
     public record PasscodeRequest(
-            UUID accountId,
-            String code,
-            TypePasscode type,
-            ActiveStatus active,
+            @NotNull UUID accountId,
+            @NotBlank @Size(min = 6, max = 6) @Pattern(regexp = "\\d{6}") String code,
+            @NotNull TypePasscode type,
+            @NotNull ActiveStatus active,
             LocalDateTime time,
             Integer totalDay,
             Integer totalMonth
     ) {
     }
+
+    @PostMapping("/register-owner")
+    public ApiResponse createRegisterOwnerPasscode(@RequestBody @Valid RegisterOwnerPasscodeRequest request) {
+        return ApiResponse.builder().result(passcodeService.createRegisterOwnerPasscode(request)).build();
+    }
+
+
 }

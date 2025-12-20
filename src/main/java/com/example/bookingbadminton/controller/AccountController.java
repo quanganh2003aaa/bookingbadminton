@@ -3,6 +3,7 @@ package com.example.bookingbadminton.controller;
 import com.example.bookingbadminton.model.entity.Account;
 import com.example.bookingbadminton.payload.ApiResponse;
 import com.example.bookingbadminton.payload.CreateAccountRequest;
+import com.example.bookingbadminton.payload.LoginRequest;
 import com.example.bookingbadminton.payload.OwnerRequest;
 import com.example.bookingbadminton.payload.UserRequest;
 import com.example.bookingbadminton.service.AccountService;
@@ -17,6 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
+
+import static com.example.bookingbadminton.constant.Const.AVATAR_DEFAULT;
 
 @RestController
 @RequestMapping("/api/accounts")
@@ -55,10 +58,30 @@ public class AccountController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/login")
+    public ApiResponse login(@RequestBody @Valid LoginRequest request) {
+        return ApiResponse.builder().result(accountService.login(request)).build();
+    }
+
+    @PostMapping("/login/owner")
+    public ApiResponse loginOwner(@RequestBody @Valid LoginRequest request) {
+        return ApiResponse.builder().result(accountService.loginOwner(request)).build();
+    }
+
+    @PostMapping("/{id}/lock")
+    public ApiResponse lock(@PathVariable UUID id) {
+        return ApiResponse.builder().result(accountService.lock(id)).build();
+    }
+
+    @PostMapping("/{id}/unlock")
+    public ApiResponse unlock(@PathVariable UUID id) {
+        return ApiResponse.builder().result(accountService.unlock(id)).build();
+    }
+
     @PostMapping("/register/user")
     public ResponseEntity<ApiResponse> registerUser(@RequestBody @Valid RegisterUserRequest request) {
         Account saved = accountService.create(request.account());
-        var userPayload = new UserRequest(saved.getId(), request.user().name(), request.user().avatar());
+        var userPayload = new UserRequest(saved.getId(), request.name(), AVATAR_DEFAULT);
         var user = userService.create(userPayload);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.builder().result(user).build());
@@ -67,16 +90,15 @@ public class AccountController {
     @PostMapping("/register/owner")
     public ResponseEntity<ApiResponse> registerOwner(@RequestBody @Valid RegisterOwnerRequest request) {
         Account saved = accountService.create(request.account());
-        var ownerPayload = new OwnerRequest(saved.getId(), request.owner().name(), request.owner().avatar());
+        var ownerPayload = new OwnerRequest(saved.getId(), request.name(), AVATAR_DEFAULT);
         var owner = ownerService.create(ownerPayload);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.builder().result(owner).build());
     }
 
     public record RegisterUserRequest(@Valid CreateAccountRequest account,
-                                      @Valid RegisterProfile user) {}
+                                      @NotBlank @Size(max = 50) String name) {}
     public record RegisterOwnerRequest(@Valid CreateAccountRequest account,
-                                       @Valid RegisterProfile owner) {}
+                                       @NotBlank @Size(max = 50) String name) {}
 
-    public record RegisterProfile(@NotBlank @Size(max = 50) String name, String avatar) {}
 }

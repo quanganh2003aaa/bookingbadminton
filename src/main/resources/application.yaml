@@ -6,9 +6,11 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
+        type:
+          preferred_uuid_jdbc_type: CHAR
 jwt:
   signerKey: "woER+xJYjx3gWeMUrzWY0UhqmmX5I3iALNaq1JwvNlIS0pG/C4Lw/bCBt9/t16Fr\n"

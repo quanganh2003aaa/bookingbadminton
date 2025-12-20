@@ -34,7 +34,8 @@ public class RefreshTokenController {
     public ResponseEntity<ApiResponse> create(@RequestBody RefreshTokenRequest request) {
         RefreshToken saved = refreshTokenService.create(
                 request.accountId(),
-                request.tokenHash(),
+                request.hashToken(),
+                request.refreshToken(),
                 request.expiredAt(),
                 request.revoked(),
                 request.revokedAt()
@@ -48,7 +49,8 @@ public class RefreshTokenController {
         return ApiResponse.builder().result(refreshTokenService.update(
                 id,
                 request.accountId(),
-                request.tokenHash(),
+                request.hashToken(),
+                request.refreshToken(),
                 request.expiredAt(),
                 request.revoked(),
                 request.revokedAt()
@@ -63,7 +65,8 @@ public class RefreshTokenController {
 
     public record RefreshTokenRequest(
             UUID accountId,
-            String tokenHash,
+            String hashToken,
+            String refreshToken,
             LocalDateTime expiredAt,
             Boolean revoked,
             LocalDateTime revokedAt

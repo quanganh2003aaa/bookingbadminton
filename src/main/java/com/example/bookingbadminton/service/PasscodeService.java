@@ -3,6 +3,8 @@ package com.example.bookingbadminton.service;
 import com.example.bookingbadminton.model.Enum.ActiveStatus;
 import com.example.bookingbadminton.model.Enum.TypePasscode;
 import com.example.bookingbadminton.model.entity.Passcode;
+import com.example.bookingbadminton.payload.RegisterOwnerPasscodeRequest;
+import com.example.bookingbadminton.payload.RegisterOwnerPasscodeResponse;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,9 +15,13 @@ public interface PasscodeService {
 
     Passcode get(UUID id);
 
-    Passcode create(UUID accountId, String code, TypePasscode type, ActiveStatus active, LocalDateTime time, Integer totalDay, Integer totalMonth);
+    Passcode create(UUID accountId, String code, TypePasscode type);
 
     Passcode update(UUID id, UUID accountId, String code, TypePasscode type, ActiveStatus active, LocalDateTime time, Integer totalDay, Integer totalMonth);
 
     void delete(UUID id);
+
+    RegisterOwnerPasscodeResponse createRegisterOwnerPasscode(RegisterOwnerPasscodeRequest request);
+
+
 }

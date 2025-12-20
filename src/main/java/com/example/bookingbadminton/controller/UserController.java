@@ -2,7 +2,10 @@ package com.example.bookingbadminton.controller;
 
 import com.example.bookingbadminton.model.entity.User;
 import com.example.bookingbadminton.payload.ApiResponse;
+import com.example.bookingbadminton.payload.PageResponse;
 import com.example.bookingbadminton.payload.UserRequest;
+import com.example.bookingbadminton.payload.UserAdminResponse;
+import com.example.bookingbadminton.service.AccountService;
 import com.example.bookingbadminton.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,10 +21,21 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService userService;
+    private final AccountService accountService;
 
     @GetMapping
     public ApiResponse list() {
         return ApiResponse.builder().result(userService.findAll()).build();
+    }
+
+    @GetMapping("/admin")
+    public ApiResponse adminList(@RequestParam(defaultValue = "0") int page,
+                                 @RequestParam(defaultValue = "10") int size,
+                                 @RequestParam(required = false) String search,
+                                  @RequestParam(required = false) Boolean locked) {
+        var pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        var result = userService.adminList(search, locked, pageable);
+        return ApiResponse.builder().result(PageResponse.from(result)).build();
     }
 
     @GetMapping("/{id}")
@@ -43,7 +57,7 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        userService.delete(id);
+        accountService.delete(id);
         return ResponseEntity.noContent().build();
     }
 

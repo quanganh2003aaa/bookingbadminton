@@ -2,6 +2,9 @@ package com.example.bookingbadminton.service;
 
 import com.example.bookingbadminton.model.entity.User;
 import com.example.bookingbadminton.payload.UserRequest;
+import com.example.bookingbadminton.payload.UserAdminResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.UUID;
@@ -15,5 +18,5 @@ public interface UserService {
 
     User update(UUID id, UserRequest request);
 
-    void delete(UUID id);
+    Page<UserAdminResponse> adminList(String search, Boolean locked, Pageable pageable);
 }

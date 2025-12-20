@@ -25,6 +25,6 @@ public class Account extends BaseModel {
     @Column(length = 50, nullable = false, unique = true)
     private String gmail;
 
-    @Column(length = 10, nullable = false, unique = true)
+    @Column(length = 10, nullable = false)
     private String msisdn;
 }

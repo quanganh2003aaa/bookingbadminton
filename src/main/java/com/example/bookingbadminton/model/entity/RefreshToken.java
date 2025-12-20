@@ -34,8 +34,11 @@ public class RefreshToken {
     @EqualsAndHashCode.Exclude
     private Account account;
 
-    @Column(name = "token_hash", length = 255, nullable = false)
-    private String tokenHash;
+    @Column(name = "hash_token", length = 255, nullable = false)
+    private String hashToken;
+
+    @Column(name = "refresh_token", length = 255, nullable = false)
+    private String refreshToken;
 
     @Column(name = "expired_at")
     private LocalDateTime expiredAt;

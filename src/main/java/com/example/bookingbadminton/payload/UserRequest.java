@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public record UserRequest(
         @NotNull UUID accountId,
-        @NotBlank @Size(max = 50) String name,
+        @NotBlank @Size(min = 1, max = 50) String name,
         String avatar
 ) {
 }

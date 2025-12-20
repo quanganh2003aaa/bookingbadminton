@@ -8,7 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.UUID;
 
 @RestController
@@ -53,8 +53,8 @@ public class TimeSlotController {
     public record TimeSlotRequest(
             UUID fieldId,
             Integer price,
-            LocalDateTime startHour,
-            LocalDateTime endHour
+            LocalTime startHour,
+            LocalTime endHour
     ) {
     }
 }

@@ -4,6 +4,7 @@ import com.example.bookingbadminton.model.Enum.ActiveStatus;
 import com.example.bookingbadminton.payload.ApiResponse;
 import com.example.bookingbadminton.payload.FieldCardResponse;
 import com.example.bookingbadminton.payload.FieldRequest;
+import com.example.bookingbadminton.payload.PageResponse;
 import com.example.bookingbadminton.service.FieldService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -28,7 +29,7 @@ public class FieldController {
                             @RequestParam(required = false) String search) {
         Pageable pageable = PageRequest.of(page, size);
         Page<FieldCardResponse> result = fieldService.search(search, pageable);
-        return ApiResponse.builder().result(result).build();
+        return ApiResponse.builder().result(PageResponse.from(result)).build();
     }
 
     @GetMapping("/{id}")

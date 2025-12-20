@@ -11,9 +11,9 @@ public interface RefreshTokenService {
 
     RefreshToken get(UUID id);
 
-    RefreshToken create(UUID accountId, String tokenHash, LocalDateTime expiredAt, Boolean revoked, LocalDateTime revokedAt);
+    RefreshToken create(UUID accountId, String hashToken, String refreshToken, LocalDateTime expiredAt, Boolean revoked, LocalDateTime revokedAt);
 
-    RefreshToken update(UUID id, UUID accountId, String tokenHash, LocalDateTime expiredAt, Boolean revoked, LocalDateTime revokedAt);
+    RefreshToken update(UUID id, UUID accountId, String hashToken, String refreshToken, LocalDateTime expiredAt, Boolean revoked, LocalDateTime revokedAt);
 
     void delete(UUID id);
 }
