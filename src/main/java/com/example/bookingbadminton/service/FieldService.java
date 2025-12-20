@@ -1,8 +1,10 @@
 package com.example.bookingbadminton.service;
 
 import com.example.bookingbadminton.model.entity.Field;
+import com.example.bookingbadminton.payload.FieldAdminResponse;
 import com.example.bookingbadminton.payload.FieldCardResponse;
 import com.example.bookingbadminton.payload.FieldRequest;
+import com.example.bookingbadminton.payload.FieldDetailResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -21,4 +23,8 @@ public interface FieldService {
     void delete(UUID id);
 
     Page<FieldCardResponse> search(String search, Pageable pageable);
+
+    Page<FieldAdminResponse> adminList(String search, Pageable pageable);
+
+    FieldDetailResponse detail(UUID id);
 }

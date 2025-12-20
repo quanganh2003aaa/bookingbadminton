@@ -3,8 +3,10 @@ package com.example.bookingbadminton.service.impl;
 import com.example.bookingbadminton.model.entity.Field;
 import com.example.bookingbadminton.model.entity.FieldImage;
 import com.example.bookingbadminton.model.entity.Owner;
+import com.example.bookingbadminton.payload.FieldAdminResponse;
 import com.example.bookingbadminton.payload.FieldCardResponse;
 import com.example.bookingbadminton.payload.FieldRequest;
+import com.example.bookingbadminton.payload.FieldDetailResponse;
 import com.example.bookingbadminton.repository.AccountRepository;
 import com.example.bookingbadminton.repository.FieldRepository;
 import com.example.bookingbadminton.repository.FieldImageRepository;
@@ -80,6 +82,34 @@ public class FieldServiceImpl implements FieldService {
                 ? fieldRepository.findAll(pageable)
                 : fieldRepository.findByNameContainingIgnoreCase(search, pageable);
         return page.map(this::toCardResponse);
+    }
+
+    @Override
+    public Page<FieldAdminResponse> adminList(String search, Pageable pageable) {
+        Page<Field> page = fieldRepository.findByFilters(search, pageable);
+        return page.map(f -> new FieldAdminResponse(
+                f.getId(),
+                f.getName(),
+                f.getOwner() != null && f.getOwner().getAccount() != null ? f.getOwner().getAccount().getGmail() : null
+        ));
+    }
+
+    @Override
+    public FieldDetailResponse detail(UUID id) {
+        Field f = get(id);
+        return new FieldDetailResponse(
+                f.getId(),
+                f.getName(),
+                f.getAddress(),
+                f.getOwner() != null ? f.getOwner().getName() : null,
+                f.getOwner() != null && f.getOwner().getAccount() != null ? f.getOwner().getAccount().getGmail() : null,
+                f.getMsisdn(),
+                f.getMobileContact(),
+                f.getStartTime(),
+                f.getEndTime(),
+                f.getActive(),
+                f.getLinkMap()
+        );
     }
 
     private FieldCardResponse toCardResponse(Field field) {

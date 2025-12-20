@@ -5,6 +5,8 @@ import com.example.bookingbadminton.payload.ApiResponse;
 import com.example.bookingbadminton.payload.FieldCardResponse;
 import com.example.bookingbadminton.payload.FieldRequest;
 import com.example.bookingbadminton.payload.PageResponse;
+import com.example.bookingbadminton.payload.FieldAdminResponse;
+import com.example.bookingbadminton.payload.FieldDetailResponse;
 import com.example.bookingbadminton.service.FieldService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -35,6 +37,21 @@ public class FieldController {
     @GetMapping("/{id}")
     public ApiResponse get(@PathVariable UUID id) {
         return ApiResponse.builder().result(fieldService.get(id)).build();
+    }
+
+    @GetMapping("/{id}/detail")
+    public ApiResponse detail(@PathVariable UUID id) {
+        FieldDetailResponse detail = fieldService.detail(id);
+        return ApiResponse.builder().result(detail).build();
+    }
+
+    @GetMapping("/admin")
+    public ApiResponse adminList(@RequestParam(defaultValue = "0") int page,
+                                 @RequestParam(defaultValue = "10") int size,
+                                 @RequestParam(required = false) String search) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<FieldAdminResponse> result = fieldService.adminList(search, pageable);
+        return ApiResponse.builder().result(PageResponse.from(result)).build();
     }
 
     @PostMapping
