@@ -46,6 +46,9 @@ public class Field extends BaseModel {
     @Column(name = "mobile_contact", length = 10)
     private String mobileContact;
 
+    @Column(name = "quantity")
+    private Integer quantity;
+
     @Column(name = "start_time")
     private LocalTime startTime;
 

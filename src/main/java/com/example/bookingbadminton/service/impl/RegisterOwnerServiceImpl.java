@@ -170,7 +170,7 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
         field.setMobileContact(registerOwner.getMobileContact());
         field.setStartTime(null);
         field.setEndTime(null);
-        field.setActive(ActiveStatus.ACTIVE);
+        field.setActive(ActiveStatus.INACTIVE);
         field.setLinkMap(registerOwner.getLinkMap());
         Field savedField = fieldRepository.save(field);
 
@@ -226,9 +226,6 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
     }
 
     private void applyUsageLimits(Passcode passcode, LocalDateTime now) {
-        if (passcode.getActive() == ActiveStatus.INACTIVE) {
-            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Passcode inactive");
-        }
         LocalDateTime lastTime = passcode.getTime();
         int totalDay = passcode.getTotalDay() == null ? 0 : passcode.getTotalDay();
         int totalMonth = passcode.getTotalMonth() == null ? 0 : passcode.getTotalMonth();
@@ -239,6 +236,9 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
         if (lastTime == null || !isSameMonth(lastTime, now)) {
             totalMonth = 0;
         }
+
+        // reset trạng thái khi bước sang ngày/tháng mới
+        passcode.setActive(ActiveStatus.ACTIVE);
 
         if (totalDay >= 5) {
             passcode.setActive(ActiveStatus.INACTIVE);

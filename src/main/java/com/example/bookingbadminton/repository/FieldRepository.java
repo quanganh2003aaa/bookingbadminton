@@ -21,4 +21,6 @@ public interface FieldRepository extends JpaRepository<Field, UUID> {
                    LOWER(a.gmail) LIKE LOWER(CONCAT('%', :search, '%')))
             """)
     Page<Field> findByFilters(@Param("search") String search, Pageable pageable);
+
+    Page<Field> findByOwner_Id(UUID ownerId, Pageable pageable);
 }

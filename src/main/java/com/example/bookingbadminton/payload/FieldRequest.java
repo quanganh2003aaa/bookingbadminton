@@ -9,7 +9,7 @@ public record FieldRequest(
         UUID ownerId,
         String name,
         String address,
-        Float ratePoint,
+        Integer quantity,
         String msisdn,
         String mobileContact,
         LocalTime startTime,

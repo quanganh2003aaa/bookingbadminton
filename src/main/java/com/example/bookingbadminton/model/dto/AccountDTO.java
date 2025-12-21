@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AccountDTO {
+    private String id;
     private String name;
     private String gmail;
     private String msisdn;
@@ -18,6 +19,7 @@ public class AccountDTO {
     private String avatar;
 
     public AccountDTO(Account account, User user){
+        this.id = user.getId().toString();
         this.gmail = account.getGmail();
         this.msisdn = account.getMsisdn();
         this.name = user.getName();
@@ -25,6 +27,7 @@ public class AccountDTO {
     }
 
     public AccountDTO(Account account, Owner owner){
+        this.id = owner.getId().toString();
         this.gmail = account.getGmail();
         this.msisdn = account.getMsisdn();
         this.name = owner.getName();

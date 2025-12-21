@@ -7,6 +7,7 @@ import com.example.bookingbadminton.payload.FieldRequest;
 import com.example.bookingbadminton.payload.PageResponse;
 import com.example.bookingbadminton.payload.FieldAdminResponse;
 import com.example.bookingbadminton.payload.FieldDetailResponse;
+import com.example.bookingbadminton.payload.FieldOwnerSummaryResponse;
 import com.example.bookingbadminton.service.FieldService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -43,6 +44,28 @@ public class FieldController {
     public ApiResponse detail(@PathVariable UUID id) {
         FieldDetailResponse detail = fieldService.detail(id);
         return ApiResponse.builder().result(detail).build();
+    }
+
+    @GetMapping("/owner")
+    public ApiResponse ownerList(@RequestParam UUID ownerId,
+                                 @RequestParam(defaultValue = "0") int page,
+                                 @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<FieldOwnerSummaryResponse> result = fieldService.ownerFields(ownerId, pageable);
+        return ApiResponse.builder().result(PageResponse.from(result)).build();
+    }
+
+    @GetMapping("/owner/{id}")
+    public ApiResponse ownerDetail(@PathVariable UUID id, @RequestParam UUID ownerId) {
+        FieldDetailResponse detail = fieldService.ownerFieldDetail(ownerId, id);
+        return ApiResponse.builder().result(detail).build();
+    }
+
+    @PutMapping("/owner/{id}")
+    public ApiResponse ownerUpdate(@PathVariable UUID id,
+                                   @RequestParam UUID ownerId,
+                                   @RequestBody FieldRequest request) {
+        return ApiResponse.builder().result(fieldService.ownerUpdate(ownerId, id, request)).build();
     }
 
     @GetMapping("/admin")

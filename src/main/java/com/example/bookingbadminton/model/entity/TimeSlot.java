@@ -1,6 +1,7 @@
 package com.example.bookingbadminton.model.entity;
 
 import com.example.bookingbadminton.model.BaseModel;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -26,6 +27,7 @@ public class TimeSlot extends BaseModel {
     @JoinColumn(name = "id_field", nullable = false)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
+    @JsonIgnoreProperties({"owner", "hibernateLazyInitializer", "handler"})
     private Field field;
 
     private Integer price;

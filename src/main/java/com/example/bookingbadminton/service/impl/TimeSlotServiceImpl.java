@@ -1,7 +1,10 @@
 package com.example.bookingbadminton.service.impl;
 
+import com.example.bookingbadminton.controller.TimeSlotController;
+import com.example.bookingbadminton.model.dto.TimeSlotDTO;
 import com.example.bookingbadminton.model.entity.Field;
 import com.example.bookingbadminton.model.entity.TimeSlot;
+import com.example.bookingbadminton.payload.TimeSlotItemRequest;
 import com.example.bookingbadminton.repository.FieldRepository;
 import com.example.bookingbadminton.repository.TimeSlotRepository;
 import com.example.bookingbadminton.service.TimeSlotService;
@@ -13,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Comparator;
 import java.util.UUID;
 
 @Service
@@ -60,5 +64,54 @@ public class TimeSlotServiceImpl implements TimeSlotService {
         TimeSlot slot = get(id);
         slot.setDeletedAt(LocalDateTime.now());
         timeSlotRepository.save(slot);
+    }
+
+    @Override
+    public List<TimeSlotDTO> listByField(UUID fieldId) {
+        return timeSlotRepository.findByField_IdOrderByStartHour(fieldId).stream().map(TimeSlotDTO::new).toList();
+    }
+
+    @Override
+    public List<TimeSlot> setSlots(UUID fieldId, List<TimeSlotItemRequest> slots) {
+        Field field = fieldRepository.findById(fieldId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Field not found"));
+        if (field.getStartTime() == null || field.getEndTime() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Field operating time not set");
+        }
+        if (slots == null || slots.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Timeslot list is empty");
+        }
+        slots = slots.stream()
+                .sorted(Comparator.comparing(TimeSlotItemRequest::startHour))
+                .toList();
+        LocalTime expectedStart = field.getStartTime();
+        for (TimeSlotItemRequest s : slots) {
+            if (s.startHour() == null || s.endHour() == null || !s.startHour().isBefore(s.endHour())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid time range");
+            }
+            if (!s.startHour().equals(expectedStart)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Timeslots must be continuous from field start time");
+            }
+            expectedStart = s.endHour();
+            if (expectedStart.isAfter(field.getEndTime())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Timeslots exceed field end time");
+            }
+        }
+        if (!expectedStart.equals(field.getEndTime())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Timeslots must end at field end time");
+        }
+
+        List<TimeSlot> existing = timeSlotRepository.findByField_IdOrderByStartHour(fieldId);
+        timeSlotRepository.deleteAll(existing);
+
+        return slots.stream().map(s -> {
+            TimeSlot slot = new TimeSlot();
+            slot.setField(field);
+            slot.setPrice(s.price());
+            slot.setStartHour(s.startHour());
+            slot.setEndHour(s.endHour());
+            timeSlotRepository.save(slot);
+            return slot;
+        }).toList();
     }
 }

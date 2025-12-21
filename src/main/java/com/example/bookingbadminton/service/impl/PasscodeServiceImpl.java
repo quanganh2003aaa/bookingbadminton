@@ -124,9 +124,6 @@ public class PasscodeServiceImpl implements PasscodeService {
     }
 
     private void applyUsageLimits(Passcode passcode, LocalDateTime now) {
-        if (passcode.getActive() == ActiveStatus.INACTIVE) {
-            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Passcode inactive");
-        }
         LocalDateTime lastTime = passcode.getTime();
         int totalDay = passcode.getTotalDay() == null ? 0 : passcode.getTotalDay();
         int totalMonth = passcode.getTotalMonth() == null ? 0 : passcode.getTotalMonth();
@@ -138,6 +135,10 @@ public class PasscodeServiceImpl implements PasscodeService {
             totalMonth = 0;
         }
 
+        // reset trạng thái khi bước sang ngày/tháng mới
+        passcode.setActive(ActiveStatus.ACTIVE);
+
+        // kiểm tra quota hiện tại
         if (totalDay >= 5) {
             passcode.setActive(ActiveStatus.INACTIVE);
             throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Passcode daily limit exceeded");
@@ -153,6 +154,7 @@ public class PasscodeServiceImpl implements PasscodeService {
         passcode.setTotalMonth(totalMonth);
         passcode.setTime(now);
 
+        // kiểm tra lại sau khi tăng
         if (totalDay > 5 || totalMonth > 15) {
             passcode.setActive(ActiveStatus.INACTIVE);
             throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Passcode limit exceeded");

@@ -3,14 +3,18 @@ package com.example.bookingbadminton.service.impl;
 import com.example.bookingbadminton.model.entity.Field;
 import com.example.bookingbadminton.model.entity.FieldImage;
 import com.example.bookingbadminton.model.entity.Owner;
+import com.example.bookingbadminton.model.entity.TimeSlot;
 import com.example.bookingbadminton.payload.FieldAdminResponse;
 import com.example.bookingbadminton.payload.FieldCardResponse;
 import com.example.bookingbadminton.payload.FieldRequest;
 import com.example.bookingbadminton.payload.FieldDetailResponse;
+import com.example.bookingbadminton.payload.FieldOwnerSummaryResponse;
 import com.example.bookingbadminton.repository.AccountRepository;
 import com.example.bookingbadminton.repository.FieldRepository;
 import com.example.bookingbadminton.repository.FieldImageRepository;
 import com.example.bookingbadminton.repository.OwnerRepository;
+import com.example.bookingbadminton.repository.CommentRepository;
+import com.example.bookingbadminton.repository.TimeSlotRepository;
 import com.example.bookingbadminton.service.FieldService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -20,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,6 +36,8 @@ public class FieldServiceImpl implements FieldService {
     private final AccountRepository accountRepository;
     private final OwnerRepository ownerRepository;
     private final FieldImageRepository fieldImageRepository;
+    private final CommentRepository commentRepository;
+    private final TimeSlotRepository timeSlotRepository;
 
     @Override
     public List<Field> findAll() {
@@ -59,14 +66,16 @@ public class FieldServiceImpl implements FieldService {
         field.setOwner(owner);
         field.setName(request.name());
         field.setAddress(request.address());
-        field.setRatePoint(request.ratePoint());
+        field.setQuantity(request.quantity());
         field.setMsisdn(request.msisdn());
         field.setMobileContact(request.mobileContact());
         field.setStartTime(request.startTime());
         field.setEndTime(request.endTime());
         field.setActive(request.active());
         field.setLinkMap(request.linkMap());
-        return fieldRepository.save(field);
+        Field saved = fieldRepository.save(field);
+        ensureTimeSlotsAlign(saved);
+        return saved;
     }
 
     @Override
@@ -112,6 +121,73 @@ public class FieldServiceImpl implements FieldService {
         );
     }
 
+    @Override
+    public Page<FieldOwnerSummaryResponse> ownerFields(UUID ownerId, Pageable pageable) {
+        Owner owner = ownerRepository.findById(ownerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found"));
+        Page<Field> page = fieldRepository.findByOwner_Id(owner.getId(), pageable);
+        return page.map(this::toOwnerSummary);
+    }
+
+    @Override
+    public FieldDetailResponse ownerFieldDetail(UUID ownerId, UUID fieldId) {
+        Owner owner = ownerRepository.findById(ownerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found"));
+        Field field = get(fieldId);
+        if (!field.getOwner().getId().equals(owner.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Field not owned by this account");
+        }
+        return new FieldDetailResponse(
+                field.getId(),
+                field.getName(),
+                field.getAddress(),
+                field.getOwner() != null ? field.getOwner().getName() : null,
+                field.getOwner() != null && field.getOwner().getAccount() != null ? field.getOwner().getAccount().getGmail() : null,
+                field.getMsisdn(),
+                field.getMobileContact(),
+                field.getStartTime(),
+                field.getEndTime(),
+                field.getActive(),
+                field.getLinkMap()
+        );
+    }
+
+    @Override
+    public Field ownerUpdate(UUID ownerId, UUID fieldId, FieldRequest request) {
+        Owner owner = ownerRepository.findById(ownerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found"));
+        Field field = get(fieldId);
+        if (!field.getOwner().getId().equals(owner.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Field not owned by this account");
+        }
+        field.setName(request.name());
+        field.setAddress(request.address());
+        field.setQuantity(request.quantity());
+        field.setMsisdn(request.msisdn());
+        field.setMobileContact(request.mobileContact());
+        field.setStartTime(request.startTime());
+        field.setEndTime(request.endTime());
+        field.setActive(request.active());
+        field.setLinkMap(request.linkMap());
+        Field saved = fieldRepository.save(field);
+        ensureTimeSlotsAlign(saved);
+        return saved;
+    }
+
+    private FieldOwnerSummaryResponse toOwnerSummary(Field field) {
+        long totalComments = commentRepository.countByField_Id(field.getId());
+        Double avg = commentRepository.averageRateByFieldId(field.getId());
+        Float averageRate = avg == null ? null : avg.floatValue();
+        return new FieldOwnerSummaryResponse(
+                field.getId(),
+                field.getName(),
+                field.getAddress(),
+                field.getQuantity(),
+                averageRate,
+                totalComments
+        );
+    }
+
     private FieldCardResponse toCardResponse(Field field) {
         String image = fieldImageRepository.findFirstByField_Id(field.getId())
                 .map(FieldImage::getImage)
@@ -125,5 +201,78 @@ public class FieldServiceImpl implements FieldService {
                 field.getMobileContact(),
                 image
         );
+    }
+
+    private void ensureTimeSlotsAlign(Field field) {
+        if (field.getStartTime() == null || field.getEndTime() == null) {
+            return;
+        }
+        if (!field.getStartTime().isBefore(field.getEndTime())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Field start time must be before end time");
+        }
+
+        var existing = timeSlotRepository.findByField_IdOrderByStartHour(field.getId());
+        // Không có slot -> tạo slot bao toàn bộ
+        if (existing.isEmpty()) {
+            TimeSlot slot = new TimeSlot();
+            slot.setField(field);
+            slot.setPrice(0);
+            slot.setStartHour(field.getStartTime());
+            slot.setEndHour(field.getEndTime());
+            timeSlotRepository.save(slot);
+            return;
+        }
+
+        // Lọc và điều chỉnh timeslot theo khung giờ mới, đồng thời cắt bỏ phần thừa
+        java.util.List<TimeSlot> processed = new java.util.ArrayList<>();
+        LocalTime expectedStart = field.getStartTime();
+
+        for (TimeSlot s : existing) {
+            if (s.getStartHour() == null || s.getEndHour() == null || !s.getStartHour().isBefore(s.getEndHour())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid timeslot range");
+            }
+            // slot kết thúc trước giờ mở cửa mới -> bỏ qua
+            if (!s.getEndHour().isAfter(field.getStartTime())) {
+                continue;
+            }
+            LocalTime start = s.getStartHour().isBefore(expectedStart) ? expectedStart : s.getStartHour();
+            LocalTime end = s.getEndHour().isAfter(field.getEndTime()) ? field.getEndTime() : s.getEndHour();
+            if (!start.isBefore(end)) {
+                continue;
+            }
+            if (!start.equals(expectedStart)) {
+                // đảm bảo liên tục
+                start = expectedStart;
+            }
+            TimeSlot slot = new TimeSlot();
+            slot.setField(field);
+            slot.setPrice(s.getPrice());
+            slot.setStartHour(start);
+            slot.setEndHour(end);
+            processed.add(slot);
+            expectedStart = end;
+            if (!expectedStart.isBefore(field.getEndTime())) {
+                break;
+            }
+        }
+
+        // Nếu chưa phủ tới endTime, kéo dài slot cuối hoặc tạo mới
+        if (processed.isEmpty()) {
+            TimeSlot slot = new TimeSlot();
+            slot.setField(field);
+            slot.setPrice(0);
+            slot.setStartHour(field.getStartTime());
+            slot.setEndHour(field.getEndTime());
+            processed.add(slot);
+        } else {
+            TimeSlot last = processed.get(processed.size() - 1);
+            if (!last.getEndHour().equals(field.getEndTime())) {
+                last.setEndHour(field.getEndTime());
+            }
+        }
+
+        // Lưu: xóa hết slot cũ, lưu danh sách mới (toàn bộ là entity mới hoặc đã chỉnh)
+        timeSlotRepository.deleteAll(existing);
+        timeSlotRepository.saveAll(processed);
     }
 }

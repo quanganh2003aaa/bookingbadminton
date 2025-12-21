@@ -5,6 +5,7 @@ import com.example.bookingbadminton.payload.FieldAdminResponse;
 import com.example.bookingbadminton.payload.FieldCardResponse;
 import com.example.bookingbadminton.payload.FieldRequest;
 import com.example.bookingbadminton.payload.FieldDetailResponse;
+import com.example.bookingbadminton.payload.FieldOwnerSummaryResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -27,4 +28,10 @@ public interface FieldService {
     Page<FieldAdminResponse> adminList(String search, Pageable pageable);
 
     FieldDetailResponse detail(UUID id);
+
+    Page<FieldOwnerSummaryResponse> ownerFields(UUID ownerId, Pageable pageable);
+
+    FieldDetailResponse ownerFieldDetail(UUID ownerId, UUID fieldId);
+
+    Field ownerUpdate(UUID ownerId, UUID fieldId, FieldRequest request);
 }
