@@ -2,6 +2,7 @@ package com.example.bookingbadminton.service.impl;
 
 import com.example.bookingbadminton.model.Enum.BookingStatus;
 import com.example.bookingbadminton.model.entity.Booking;
+import com.example.bookingbadminton.model.entity.BookingField;
 import com.example.bookingbadminton.model.entity.Field;
 import com.example.bookingbadminton.model.entity.User;
 import com.example.bookingbadminton.repository.BookingRepository;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -53,12 +55,10 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Field not found"));
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        booking.setField(field);
         booking.setUser(user);
         booking.setMsisdn(msisdn);
-        booking.setStartHour(startHour);
-        booking.setEndHour(endHour);
         booking.setStatus(status);
+        syncBookingField(booking, field, startHour, endHour);
         return bookingRepository.save(booking);
     }
 
@@ -67,5 +67,25 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = get(id);
         booking.setDeletedAt(LocalDateTime.now());
         bookingRepository.save(booking);
+    }
+
+    private void syncBookingField(Booking booking, Field field, LocalDateTime startHour, LocalDateTime endHour) {
+        List<BookingField> links = booking.getBookingField();
+        if (links == null || links.isEmpty()) {
+            BookingField link = new BookingField();
+            link.setBooking(booking);
+            link.setField(field);
+            link.setStartHour(startHour);
+            link.setEndHour(endHour);
+            List<BookingField> newLinks = new ArrayList<>();
+            newLinks.add(link);
+            booking.setBookingField(newLinks);
+            return;
+        }
+        BookingField link = links.get(0);
+        link.setBooking(booking);
+        link.setField(field);
+        link.setStartHour(startHour);
+        link.setEndHour(endHour);
     }
 }

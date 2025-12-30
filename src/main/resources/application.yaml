@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: "jdbc:mysql://127.0.0.1:3307/bookingbadminton"
+    url: "jdbc:mysql://127.0.0.1:3306/bookingbadminton?createDatabaseIfNotExist=true"
     username: root
-    password: "gungun2k3"
+    password: Quankane1905@
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:

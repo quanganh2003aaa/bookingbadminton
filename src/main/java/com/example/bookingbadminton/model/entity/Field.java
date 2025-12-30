@@ -2,14 +2,7 @@ package com.example.bookingbadminton.model.entity;
 
 import com.example.bookingbadminton.model.BaseModel;
 import com.example.bookingbadminton.model.Enum.ActiveStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -17,6 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.time.LocalTime;
+import java.util.List;
 
 @Entity
 @Table(name = "field")
@@ -60,4 +54,14 @@ public class Field extends BaseModel {
 
     @Column(name = "link_map", columnDefinition = "TEXT")
     private String linkMap;
+
+    @OneToMany(mappedBy = "field", cascade = CascadeType.ALL)
+    private List<BookingField> bookingField;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Field parentField;
+
+    @OneToMany(mappedBy = "parentField", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Field> subFields;
 }

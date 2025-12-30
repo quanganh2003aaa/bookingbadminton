@@ -72,9 +72,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Account lock(UUID id) {
-        com.example.bookingbadminton.model.entity.User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        Account account = user.getAccount();
+        Account account = get(id);
         if (account.getDeletedAt() == null) {
             account.setDeletedAt(LocalDateTime.now());
             accountRepository.save(account);
@@ -84,9 +82,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Account unlock(UUID id) {
-        com.example.bookingbadminton.model.entity.User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        Account account = user.getAccount();
+        Account account = get(id);
         if (account.getDeletedAt() != null) {
             account.setDeletedAt(null);
             accountRepository.save(account);
