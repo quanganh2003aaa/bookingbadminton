@@ -1,4 +1,4 @@
-package com.example.bookingbadminton.payload;
+package com.example.bookingbadminton.payload.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

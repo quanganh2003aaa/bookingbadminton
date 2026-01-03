@@ -1,6 +1,7 @@
 package com.example.bookingbadminton.service.impl;
 
 import com.example.bookingbadminton.model.Enum.InvoiceStatus;
+import com.example.bookingbadminton.model.Enum.BookingStatus;
 import com.example.bookingbadminton.model.entity.Booking;
 import com.example.bookingbadminton.model.entity.Invoice;
 import com.example.bookingbadminton.repository.BookingRepository;
@@ -51,6 +52,10 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoice.setBooking(booking);
         invoice.setPrice(price);
         invoice.setStatus(status);
+        if (status == InvoiceStatus.PAY) {
+            booking.setStatus(BookingStatus.ACCEPT);
+            bookingRepository.save(booking);
+        }
         return invoiceRepository.save(invoice);
     }
 

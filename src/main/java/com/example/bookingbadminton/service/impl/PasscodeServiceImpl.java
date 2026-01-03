@@ -4,7 +4,7 @@ import com.example.bookingbadminton.model.Enum.ActiveStatus;
 import com.example.bookingbadminton.model.Enum.TypePasscode;
 import com.example.bookingbadminton.model.entity.Account;
 import com.example.bookingbadminton.model.entity.Passcode;
-import com.example.bookingbadminton.payload.RegisterOwnerPasscodeRequest;
+import com.example.bookingbadminton.payload.request.RegisterOwnerPasscodeRequest;
 import com.example.bookingbadminton.payload.RegisterOwnerPasscodeResponse;
 import com.example.bookingbadminton.repository.AccountRepository;
 import com.example.bookingbadminton.repository.PasscodeRepository;

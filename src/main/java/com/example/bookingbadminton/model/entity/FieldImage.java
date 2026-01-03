@@ -2,6 +2,7 @@ package com.example.bookingbadminton.model.entity;
 
 import com.example.bookingbadminton.model.BaseModel;
 import com.example.bookingbadminton.model.Enum.TypeImage;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -27,6 +28,7 @@ public class FieldImage extends BaseModel {
     @JoinColumn(name = "id_field", nullable = false)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
+    @JsonIgnoreProperties({"owner", "hibernateLazyInitializer", "handler"})
     private Field field;
 
     @Enumerated(EnumType.STRING)

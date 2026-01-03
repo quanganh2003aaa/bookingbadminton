@@ -1,5 +1,6 @@
 package com.example.bookingbadminton.service.impl;
 
+import com.example.bookingbadminton.model.Enum.ActiveStatus;
 import com.example.bookingbadminton.model.entity.Field;
 import com.example.bookingbadminton.model.entity.FieldImage;
 import com.example.bookingbadminton.model.entity.Owner;
@@ -8,13 +9,17 @@ import com.example.bookingbadminton.payload.FieldAdminResponse;
 import com.example.bookingbadminton.payload.FieldCardResponse;
 import com.example.bookingbadminton.payload.FieldRequest;
 import com.example.bookingbadminton.payload.FieldDetailResponse;
+import com.example.bookingbadminton.payload.FieldOwnerDetailResponse;
 import com.example.bookingbadminton.payload.FieldOwnerSummaryResponse;
+import com.example.bookingbadminton.payload.FieldOwnerBookingSummary;
+import com.example.bookingbadminton.payload.FieldUserDetailResponse;
 import com.example.bookingbadminton.repository.AccountRepository;
 import com.example.bookingbadminton.repository.FieldRepository;
 import com.example.bookingbadminton.repository.FieldImageRepository;
 import com.example.bookingbadminton.repository.OwnerRepository;
 import com.example.bookingbadminton.repository.CommentRepository;
 import com.example.bookingbadminton.repository.TimeSlotRepository;
+import com.example.bookingbadminton.repository.BookingRepository;
 import com.example.bookingbadminton.service.FieldService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,10 +28,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +45,7 @@ public class FieldServiceImpl implements FieldService {
     private final FieldImageRepository fieldImageRepository;
     private final CommentRepository commentRepository;
     private final TimeSlotRepository timeSlotRepository;
+    private final BookingRepository bookingRepository;
 
     @Override
     public List<Field> findAll() {
@@ -86,10 +94,8 @@ public class FieldServiceImpl implements FieldService {
     }
 
     @Override
-    public Page<FieldCardResponse> search(String search, Pageable pageable) {
-        Page<Field> page = (search == null || search.isBlank())
-                ? fieldRepository.findAll(pageable)
-                : fieldRepository.findByNameContainingIgnoreCase(search, pageable);
+    public Page<FieldCardResponse> search(String search, ActiveStatus active, Pageable pageable) {
+        Page<Field> page = fieldRepository.findByFiltersForUser(search, active, pageable);
         return page.map(this::toCardResponse);
     }
 
@@ -130,25 +136,39 @@ public class FieldServiceImpl implements FieldService {
     }
 
     @Override
-    public FieldDetailResponse ownerFieldDetail(UUID ownerId, UUID fieldId) {
+    public FieldOwnerDetailResponse ownerFieldDetail(UUID ownerId, UUID fieldId) {
         Owner owner = ownerRepository.findById(ownerId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found"));
         Field field = get(fieldId);
         if (!field.getOwner().getId().equals(owner.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Field not owned by this account");
         }
-        return new FieldDetailResponse(
+        var images = fieldImageRepository.findByField_Id(fieldId)
+                .stream()
+                .map(FieldImage::getImage)
+                .toList();
+        var timeSlots = timeSlotRepository.findByField_IdOrderByStartHour(fieldId)
+                .stream()
+                .map(ts -> new FieldOwnerDetailResponse.TimeSlotResponse(
+                        ts.getId(),
+                        ts.getStartHour(),
+                        ts.getEndHour(),
+                        ts.getPrice()
+                ))
+                .toList();
+        return new FieldOwnerDetailResponse(
                 field.getId(),
                 field.getName(),
                 field.getAddress(),
-                field.getOwner() != null ? field.getOwner().getName() : null,
-                field.getOwner() != null && field.getOwner().getAccount() != null ? field.getOwner().getAccount().getGmail() : null,
+                field.getQuantity(),
                 field.getMsisdn(),
                 field.getMobileContact(),
                 field.getStartTime(),
                 field.getEndTime(),
                 field.getActive(),
-                field.getLinkMap()
+                field.getLinkMap(),
+                images,
+                timeSlots
         );
     }
 
@@ -172,6 +192,67 @@ public class FieldServiceImpl implements FieldService {
         Field saved = fieldRepository.save(field);
         ensureTimeSlotsAlign(saved);
         return saved;
+    }
+
+    @Override
+    public Page<FieldOwnerBookingSummary> ownerFieldBookings(UUID ownerId, Pageable pageable) {
+        Owner owner = ownerRepository.findById(ownerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found"));
+        Page<Field> page = fieldRepository.findByOwner_Id(owner.getId(), pageable);
+        LocalDate today = LocalDate.now();
+        var counts = bookingRepository.countByFieldInDay(
+                today.atStartOfDay(),
+                today.plusDays(1).atStartOfDay()
+        );
+        java.util.Map<UUID, Long> countMap = new java.util.HashMap<>();
+        for (Object[] row : counts) {
+            countMap.put((UUID) row[0], (Long) row[1]);
+        }
+        return page.map(f -> new FieldOwnerBookingSummary(
+                f.getId(),
+                f.getName(),
+                countMap.getOrDefault(f.getId(), 0L),
+                f.getActive()
+        ));
+    }
+
+    @Override
+    public FieldUserDetailResponse userDetail(UUID fieldId) {
+        Field f = get(fieldId);
+        var images = fieldImageRepository.findByField_Id(fieldId)
+                .stream().map(FieldImage::getImage).toList();
+        var avatar = images.isEmpty() ? null : images.get(0);
+        var comments = commentRepository.findByField_IdOrderByCreatedAtDesc(fieldId)
+                .stream()
+                .map(c -> new FieldUserDetailResponse.FieldCommentResponse(
+                        c.getUser() != null ? c.getUser().getName() : null,
+                        c.getRate(),
+                        c.getContent()
+                ))
+                .toList();
+        var slots = timeSlotRepository.findByField_IdOrderByStartHour(fieldId)
+                .stream()
+                .map(ts -> new FieldUserDetailResponse.TimeSlotResponse(
+                        ts.getId(),
+                        ts.getStartHour(),
+                        ts.getEndHour(),
+                        ts.getPrice()
+                ))
+                .toList();
+        return new FieldUserDetailResponse(
+                f.getId(),
+                f.getName(),
+                f.getAddress(),
+                f.getMobileContact(),
+                avatar,
+                f.getStartTime(),
+                f.getEndTime(),
+                f.getActive(),
+                f.getLinkMap(),
+                images,
+                comments,
+                slots
+        );
     }
 
     private FieldOwnerSummaryResponse toOwnerSummary(Field field) {

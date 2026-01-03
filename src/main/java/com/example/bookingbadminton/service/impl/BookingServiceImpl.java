@@ -4,6 +4,7 @@ import com.example.bookingbadminton.model.Enum.BookingStatus;
 import com.example.bookingbadminton.model.entity.Booking;
 import com.example.bookingbadminton.model.entity.Field;
 import com.example.bookingbadminton.model.entity.User;
+import com.example.bookingbadminton.payload.BookingByDayResponse;
 import com.example.bookingbadminton.repository.BookingRepository;
 import com.example.bookingbadminton.repository.FieldRepository;
 import com.example.bookingbadminton.repository.UserRepository;
@@ -37,18 +38,18 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public Booking create(UUID fieldId, UUID userId, String msisdn, LocalDateTime startHour, LocalDateTime endHour, BookingStatus status) {
+    public Booking create(UUID fieldId, UUID userId, String msisdn, Integer indexField, LocalDateTime startHour, LocalDateTime endHour, BookingStatus status) {
         Booking booking = new Booking();
-        return saveBooking(booking, fieldId, userId, msisdn, startHour, endHour, status);
+        return saveBooking(booking, fieldId, userId, msisdn, indexField, startHour, endHour, status);
     }
 
     @Override
-    public Booking update(UUID id, UUID fieldId, UUID userId, String msisdn, LocalDateTime startHour, LocalDateTime endHour, BookingStatus status) {
+    public Booking update(UUID id, UUID fieldId, UUID userId, String msisdn, Integer indexField, LocalDateTime startHour, LocalDateTime endHour, BookingStatus status) {
         Booking booking = get(id);
-        return saveBooking(booking, fieldId, userId, msisdn, startHour, endHour, status);
+        return saveBooking(booking, fieldId, userId, msisdn, indexField, startHour, endHour, status);
     }
 
-    private Booking saveBooking(Booking booking, UUID fieldId, UUID userId, String msisdn, LocalDateTime startHour, LocalDateTime endHour, BookingStatus status) {
+    private Booking saveBooking(Booking booking, UUID fieldId, UUID userId, String msisdn, Integer indexField, LocalDateTime startHour, LocalDateTime endHour, BookingStatus status) {
         Field field = fieldRepository.findById(fieldId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Field not found"));
         User user = userRepository.findById(userId)
@@ -56,6 +57,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setField(field);
         booking.setUser(user);
         booking.setMsisdn(msisdn);
+        booking.setIndexField(indexField);
         booking.setStartHour(startHour);
         booking.setEndHour(endHour);
         booking.setStatus(status);
@@ -67,5 +69,41 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = get(id);
         booking.setDeletedAt(LocalDateTime.now());
         bookingRepository.save(booking);
+    }
+
+    @Override
+    public List<BookingByDayResponse> findByDay(java.time.LocalDate date) {
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
+        return bookingRepository.findByStartHourBetween(startOfDay, endOfDay).stream()
+                .map(b -> new BookingByDayResponse(
+                        b.getId(),
+                        b.getField().getId(),
+                        b.getUser().getId(),
+                        b.getMsisdn(),
+                        b.getIndexField(),
+                        b.getStartHour(),
+                        b.getEndHour(),
+                        b.getStatus()
+                ))
+                .toList();
+    }
+
+    @Override
+    public List<BookingByDayResponse> findByDayAndField(java.time.LocalDate date, UUID fieldId) {
+        LocalDateTime startOfDay = date.atStartOfDay();
+        LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
+        return bookingRepository.findByField_IdAndStartHourBetween(fieldId, startOfDay, endOfDay).stream()
+                .map(b -> new BookingByDayResponse(
+                        b.getId(),
+                        b.getField().getId(),
+                        b.getUser().getId(),
+                        b.getMsisdn(),
+                        b.getIndexField(),
+                        b.getStartHour(),
+                        b.getEndHour(),
+                        b.getStatus()
+                ))
+                .toList();
     }
 }

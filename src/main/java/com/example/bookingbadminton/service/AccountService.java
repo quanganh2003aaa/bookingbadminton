@@ -3,7 +3,7 @@ package com.example.bookingbadminton.service;
 import com.example.bookingbadminton.model.dto.AccountDTO;
 import com.example.bookingbadminton.model.entity.Account;
 import com.example.bookingbadminton.payload.CreateAccountRequest;
-import com.example.bookingbadminton.payload.LoginRequest;
+import com.example.bookingbadminton.payload.request.LoginRequest;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,7 +23,9 @@ public interface AccountService {
 
     AccountDTO loginOwner(LoginRequest request);
 
-    Account lock(UUID id);
+    AccountDTO loginAdmin(LoginRequest request);
 
-    Account unlock(UUID id);
+    String lock(UUID id);
+
+    String unlock(UUID id);
 }

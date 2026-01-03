@@ -5,7 +5,10 @@ import com.example.bookingbadminton.payload.FieldAdminResponse;
 import com.example.bookingbadminton.payload.FieldCardResponse;
 import com.example.bookingbadminton.payload.FieldRequest;
 import com.example.bookingbadminton.payload.FieldDetailResponse;
+import com.example.bookingbadminton.payload.FieldOwnerDetailResponse;
 import com.example.bookingbadminton.payload.FieldOwnerSummaryResponse;
+import com.example.bookingbadminton.payload.FieldOwnerBookingSummary;
+import com.example.bookingbadminton.payload.FieldUserDetailResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -23,7 +26,7 @@ public interface FieldService {
 
     void delete(UUID id);
 
-    Page<FieldCardResponse> search(String search, Pageable pageable);
+    Page<FieldCardResponse> search(String search, com.example.bookingbadminton.model.Enum.ActiveStatus active, Pageable pageable);
 
     Page<FieldAdminResponse> adminList(String search, Pageable pageable);
 
@@ -31,7 +34,11 @@ public interface FieldService {
 
     Page<FieldOwnerSummaryResponse> ownerFields(UUID ownerId, Pageable pageable);
 
-    FieldDetailResponse ownerFieldDetail(UUID ownerId, UUID fieldId);
+    FieldOwnerDetailResponse ownerFieldDetail(UUID ownerId, UUID fieldId);
 
     Field ownerUpdate(UUID ownerId, UUID fieldId, FieldRequest request);
+
+    Page<FieldOwnerBookingSummary> ownerFieldBookings(UUID ownerId, Pageable pageable);
+
+    FieldUserDetailResponse userDetail(UUID fieldId);
 }

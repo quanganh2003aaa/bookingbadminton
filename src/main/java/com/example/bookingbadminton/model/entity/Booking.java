@@ -2,6 +2,7 @@ package com.example.bookingbadminton.model.entity;
 
 import com.example.bookingbadminton.model.BaseModel;
 import com.example.bookingbadminton.model.Enum.BookingStatus;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -28,6 +29,7 @@ public class Booking extends BaseModel {
     @JoinColumn(name = "id_field", nullable = false)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
+    @JsonIgnoreProperties({"owner", "hibernateLazyInitializer", "handler"})
     private Field field;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -38,6 +40,9 @@ public class Booking extends BaseModel {
 
     @Column(length = 10)
     private String msisdn;
+
+    @Column(name = "index_field")
+    private Integer indexField;
 
     @Column(name = "start_hour")
     private LocalDateTime startHour;

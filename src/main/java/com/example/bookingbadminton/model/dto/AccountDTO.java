@@ -1,6 +1,7 @@
 package com.example.bookingbadminton.model.dto;
 
 import com.example.bookingbadminton.model.entity.Account;
+import com.example.bookingbadminton.model.entity.Admin;
 import com.example.bookingbadminton.model.entity.Owner;
 import com.example.bookingbadminton.model.entity.User;
 import lombok.AllArgsConstructor;
@@ -32,5 +33,17 @@ public class AccountDTO {
         this.msisdn = account.getMsisdn();
         this.name = owner.getName();
         this.avatar = owner.getAvatar();
+    }
+
+    public AccountDTO(Account account, Admin admin){
+        this.id = admin.getId().toString();
+        this.gmail = account.getGmail();
+        this.msisdn = account.getMsisdn();
+        this.name = admin.getName();
+    }
+
+    public AccountDTO(Account account){
+        this.gmail = account.getGmail();
+        this.msisdn = account.getMsisdn();
     }
 }

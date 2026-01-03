@@ -36,12 +36,6 @@ public class RegisterOwnerController {
                 .build();
     }
 
-    @GetMapping("/{id}/detail")
-    public ApiResponse detail(@PathVariable UUID id) {
-        RegisterOwnerDetailResponse result = registerOwnerService.detail(id);
-        return ApiResponse.builder().result(result).build();
-    }
-
     @PostMapping
     public ResponseEntity<ApiResponse> create(@RequestBody @Valid RegisterOwnerRequest request) {
         RegisterOwner saved = registerOwnerService.create(request);
@@ -65,22 +59,4 @@ public class RegisterOwnerController {
         return ApiResponse.builder().result(registerOwnerService.confirm(request)).build();
     }
 
-    @GetMapping("/admin")
-    public ApiResponse adminList(@RequestParam(required = false) RegisterStatus status,
-                                 @RequestParam(required = false) String search) {
-        return ApiResponse.builder()
-                .result(registerOwnerService.adminList(status, search))
-                .build();
-    }
-
-    @PostMapping("/{id}/approve")
-    public ApiResponse approve(@PathVariable UUID id) {
-        return ApiResponse.builder().result(registerOwnerService.approve(id)).build();
-    }
-
-    @PostMapping("/{id}/reject")
-    public ApiResponse reject(@PathVariable UUID id) {
-        RegisterOwnerRejectResponse result = registerOwnerService.reject(id);
-        return ApiResponse.builder().result(result).build();
-    }
 }

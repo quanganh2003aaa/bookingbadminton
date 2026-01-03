@@ -1,9 +1,16 @@
 package com.example.bookingbadminton.controller;
 
+import com.example.bookingbadminton.model.Enum.RegisterStatus;
 import com.example.bookingbadminton.model.entity.Admin;
-import com.example.bookingbadminton.payload.ApiResponse;
+import com.example.bookingbadminton.payload.*;
 import com.example.bookingbadminton.service.AdminService;
+import com.example.bookingbadminton.service.FieldService;
+import com.example.bookingbadminton.service.RegisterOwnerService;
+import com.example.bookingbadminton.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,40 +18,99 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/admins")
+@RequestMapping("/api/admin")
 @RequiredArgsConstructor
 public class AdminController {
 
     private final AdminService adminService;
+    private final UserService userService;
+    private final FieldService fieldService;
+    private final RegisterOwnerService registerOwnerService;
 
-    @GetMapping
-    public ApiResponse list() {
-        return ApiResponse.builder().result(adminService.findAll()).build();
+//    @GetMapping
+//    public ApiResponse list() {
+//        return ApiResponse.builder().result(adminService.findAll()).build();
+//    }
+
+//    @GetMapping("/{id}")
+//    public ApiResponse get(@PathVariable UUID id) {
+//        return ApiResponse.builder().result(adminService.get(id)).build();
+//    }
+
+//    @PostMapping
+//    public ResponseEntity<ApiResponse> create(@RequestBody CreateAdminRequest request) {
+//        Admin saved = adminService.create(request.accountId(), request.name());
+//        return ResponseEntity.status(HttpStatus.CREATED)
+//                .body(ApiResponse.builder().result(saved).build());
+//    }
+//
+//    @PutMapping("/{id}")
+//    public ApiResponse update(@PathVariable UUID id, @RequestBody CreateAdminRequest request) {
+//        return ApiResponse.builder()
+//                .result(adminService.update(id, request.accountId(), request.name()))
+//                .build();
+//    }
+//
+//    @DeleteMapping("/{id}")
+//    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+//        adminService.delete(id);
+//        return ResponseEntity.noContent().build();
+//    }
+
+    //API admin danh sách tài khoản người dùng
+    @GetMapping("/list-users")
+    public ApiResponse adminList(@RequestParam(defaultValue = "0") int page,
+                                 @RequestParam(defaultValue = "10") int size,
+                                 @RequestParam(required = false) String search,
+                                 @RequestParam(required = false) Boolean locked) {
+
+        return ApiResponse.builder().result(PageResponse.from(userService.adminList(search, locked, page, size))).build();
     }
 
-    @GetMapping("/{id}")
-    public ApiResponse get(@PathVariable UUID id) {
-        return ApiResponse.builder().result(adminService.get(id)).build();
+    //API admin danh sách sân cầu
+    @GetMapping("/list-fields")
+    public ApiResponse adminList(@RequestParam(defaultValue = "0") int page,
+                                 @RequestParam(defaultValue = "10") int size,
+                                 @RequestParam(required = false) String search) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<FieldAdminResponse> result = fieldService.adminList(search, pageable);
+        return ApiResponse.builder().result(PageResponse.from(result)).build();
     }
 
-    @PostMapping
-    public ResponseEntity<ApiResponse> create(@RequestBody CreateAdminRequest request) {
-        Admin saved = adminService.create(request.accountId(), request.name());
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.builder().result(saved).build());
-    }
-
-    @PutMapping("/{id}")
-    public ApiResponse update(@PathVariable UUID id, @RequestBody CreateAdminRequest request) {
+    //API admin danh sách đơn đăng ký quản lý
+    @GetMapping("/list-register-owner")
+    public ApiResponse adminList(@RequestParam(required = false) RegisterStatus status,
+                                 @RequestParam(required = false) String search) {
         return ApiResponse.builder()
-                .result(adminService.update(id, request.accountId(), request.name()))
+                .result(registerOwnerService.adminList(status, search))
                 .build();
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        adminService.delete(id);
-        return ResponseEntity.noContent().build();
+    //API admin chấp thuận đơn đăng ký quản lý
+    @PostMapping("/{id}/approve-register-owner")
+    public ApiResponse approve(@PathVariable UUID id) {
+        return ApiResponse.builder().result(registerOwnerService.approve(id)).build();
+    }
+
+    //API admin không chấp thuận đơn đăng ký quản lý
+    @PostMapping("/{id}/reject-register-owner")
+    public ApiResponse reject(@PathVariable UUID id) {
+        RegisterOwnerRejectResponse result = registerOwnerService.reject(id);
+        return ApiResponse.builder().result(result).build();
+    }
+
+    //API admin chi tiết đơn đăng ký quản lý
+    @GetMapping("/{id}/detail-register-owner")
+    public ApiResponse detailRegisterOwner(@PathVariable UUID id) {
+        RegisterOwnerDetailResponse result = registerOwnerService.detail(id);
+        return ApiResponse.builder().result(result).build();
+    }
+
+    //API admin chi tiết sân cầu
+    @GetMapping("/{id}/detail-field")
+    public ApiResponse detailFieldAdmin(@PathVariable UUID id) {
+        FieldDetailResponse detail = fieldService.detail(id);
+        return ApiResponse.builder().result(detail).build();
     }
 
     public record CreateAdminRequest(UUID accountId, String name) {

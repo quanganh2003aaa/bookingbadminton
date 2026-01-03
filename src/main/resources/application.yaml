@@ -6,11 +6,13 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
         type:
           preferred_uuid_jdbc_type: CHAR
+file:
+  upload-dir: C:\Users\My Computer\OneDrive\Desktop\hoctap\doantotnghiep\bookingbadminton-frontend\public\upload
 jwt:
   signerKey: "woER+xJYjx3gWeMUrzWY0UhqmmX5I3iALNaq1JwvNlIS0pG/C4Lw/bCBt9/t16Fr\n"

@@ -49,7 +49,7 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
     @Override
     public RegisterOwner get(UUID id) {
         return registerOwnerRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Register owner not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn đăng ký!"));
     }
 
     @Override
@@ -142,43 +142,7 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
         );
     }
 
-    @Override
-    public Field approve(UUID id) {
-        RegisterOwner registerOwner = get(id);
-        if (registerOwner.getDeletedAt() != null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Register owner deleted");
-        }
-        if (registerOwner.getActive() == RegisterStatus.ACCEPT) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Register owner already approved");
-        }
 
-        Account account = registerOwner.getAccount();
-        Owner owner = ownerRepository.findByAccount_Id(account.getId()).orElseGet(() -> {
-            Owner o = new Owner();
-            o.setAccount(account);
-            o.setName(registerOwner.getName());
-            o.setAvatar(null);
-            return ownerRepository.save(o);
-        });
-
-        Field field = new Field();
-        field.setOwner(owner);
-        field.setName(registerOwner.getName());
-        field.setAddress(registerOwner.getAddress());
-        field.setRatePoint(null);
-        field.setMsisdn(registerOwner.getMobileContact());
-        field.setMobileContact(registerOwner.getMobileContact());
-        field.setStartTime(null);
-        field.setEndTime(null);
-        field.setActive(ActiveStatus.INACTIVE);
-        field.setLinkMap(registerOwner.getLinkMap());
-        Field savedField = fieldRepository.save(field);
-
-        registerOwner.setActive(RegisterStatus.ACCEPT);
-        registerOwnerRepository.save(registerOwner);
-
-        return savedField;
-    }
 
     @Override
     public List<RegisterOwnerAdminResponse> adminList(RegisterStatus status, String search) {
@@ -212,13 +176,51 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
     }
 
     @Override
+    public Field approve(UUID id) {
+        RegisterOwner registerOwner = get(id);
+        if (registerOwner.getDeletedAt() != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn đăng ký đã bị xóa!");
+        }
+        if (registerOwner.getActive() == RegisterStatus.ACCEPT) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Đơn đăng ký đã được chấp thuận trước đó!");
+        }
+
+        Account account = registerOwner.getAccount();
+        Owner owner = ownerRepository.findByAccount_Id(account.getId()).orElseGet(() -> {
+            Owner o = new Owner();
+            o.setAccount(account);
+            o.setName(registerOwner.getName());
+            o.setAvatar(null);
+            return ownerRepository.save(o);
+        });
+
+        Field field = new Field();
+        field.setOwner(owner);
+        field.setName(registerOwner.getName());
+        field.setAddress(registerOwner.getAddress());
+        field.setRatePoint(null);
+        field.setMsisdn(registerOwner.getMobileContact());
+        field.setMobileContact(registerOwner.getMobileContact());
+        field.setStartTime(null);
+        field.setEndTime(null);
+        field.setActive(ActiveStatus.INACTIVE);
+        field.setLinkMap(registerOwner.getLinkMap());
+        Field savedField = fieldRepository.save(field);
+
+        registerOwner.setActive(RegisterStatus.ACCEPT);
+        registerOwnerRepository.save(registerOwner);
+
+        return savedField;
+    }
+
+    @Override
     public RegisterOwnerRejectResponse reject(UUID id) {
         RegisterOwner registerOwner = get(id);
         if (registerOwner.getDeletedAt() != null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Register owner deleted");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn đăng ký đã bị xóa!");
         }
         if (registerOwner.getActive() == RegisterStatus.ACCEPT) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Register owner already approved");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Đơn đăng ký đã được chấp thuận trước đó!");
         }
         registerOwner.setActive(RegisterStatus.INACCEPT);
         registerOwnerRepository.save(registerOwner);

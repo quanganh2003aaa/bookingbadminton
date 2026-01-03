@@ -16,4 +16,8 @@ public interface FieldImageService {
     FieldImage update(UUID id, UUID fieldId, TypeImage type, String image);
 
     void delete(UUID id);
+
+    FieldImage upload(UUID fieldId, TypeImage type, org.springframework.web.multipart.MultipartFile file);
+
+    List<String> listByField(UUID fieldId);
 }
