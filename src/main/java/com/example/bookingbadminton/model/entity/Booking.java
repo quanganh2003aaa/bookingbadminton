@@ -11,6 +11,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -18,6 +19,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "booking")
@@ -25,12 +27,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Booking extends BaseModel {
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_field", nullable = false)
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    @JsonIgnoreProperties({"owner", "hibernateLazyInitializer", "handler"})
-    private Field field;
+    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL)
+    private List<BookingField> bookingField;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_user", nullable = false)
@@ -40,15 +38,6 @@ public class Booking extends BaseModel {
 
     @Column(length = 10)
     private String msisdn;
-
-    @Column(name = "index_field")
-    private Integer indexField;
-
-    @Column(name = "start_hour")
-    private LocalDateTime startHour;
-
-    @Column(name = "end_hour")
-    private LocalDateTime endHour;
 
     @Enumerated(EnumType.STRING)
     private BookingStatus status;

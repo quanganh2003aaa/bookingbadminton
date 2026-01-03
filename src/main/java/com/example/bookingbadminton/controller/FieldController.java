@@ -7,6 +7,7 @@ import com.example.bookingbadminton.payload.FieldAdminResponse;
 import com.example.bookingbadminton.payload.FieldOwnerDetailResponse;
 import com.example.bookingbadminton.payload.FieldOwnerSummaryResponse;
 import com.example.bookingbadminton.payload.FieldOwnerBookingSummary;
+import com.example.bookingbadminton.payload.FieldOwnerDailyBookingResponse;
 import com.example.bookingbadminton.payload.FieldUserDetailResponse;
 import com.example.bookingbadminton.payload.FieldRequest;
 import com.example.bookingbadminton.payload.PageResponse;
@@ -22,6 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @RestController
@@ -52,6 +54,15 @@ public class FieldController {
                                    @RequestParam UUID ownerId,
                                    @RequestBody FieldRequest request) {
         return ApiResponse.builder().result(fieldService.ownerUpdate(ownerId, id, request)).build();
+    }
+
+    //API owner chi tiết tình trạng sân
+    @GetMapping("/owner/{id:[0-9a-fA-F\\-]{36}}/bookings")
+    public ApiResponse ownerDailyBookings(@PathVariable UUID id,
+                                          @RequestParam UUID ownerId,
+                                          @RequestParam LocalDate date) {
+        FieldOwnerDailyBookingResponse result = fieldService.ownerDailyBookings(ownerId, id, date);
+        return ApiResponse.builder().result(result).build();
     }
 
     @GetMapping
@@ -85,6 +96,8 @@ public class FieldController {
         Page<FieldOwnerBookingSummary> result = fieldService.ownerFieldBookings(ownerId, pageable);
         return ApiResponse.builder().result(PageResponse.from(result)).build();
     }
+
+
 
 
 

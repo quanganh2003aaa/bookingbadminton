@@ -6,12 +6,14 @@ import com.example.bookingbadminton.payload.FieldCardResponse;
 import com.example.bookingbadminton.payload.FieldRequest;
 import com.example.bookingbadminton.payload.FieldDetailResponse;
 import com.example.bookingbadminton.payload.FieldOwnerDetailResponse;
+import com.example.bookingbadminton.payload.FieldOwnerDailyBookingResponse;
 import com.example.bookingbadminton.payload.FieldOwnerSummaryResponse;
 import com.example.bookingbadminton.payload.FieldOwnerBookingSummary;
 import com.example.bookingbadminton.payload.FieldUserDetailResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,6 +41,8 @@ public interface FieldService {
     Field ownerUpdate(UUID ownerId, UUID fieldId, FieldRequest request);
 
     Page<FieldOwnerBookingSummary> ownerFieldBookings(UUID ownerId, Pageable pageable);
+
+    FieldOwnerDailyBookingResponse ownerDailyBookings(UUID ownerId, UUID fieldId, LocalDate date);
 
     FieldUserDetailResponse userDetail(UUID fieldId);
 }

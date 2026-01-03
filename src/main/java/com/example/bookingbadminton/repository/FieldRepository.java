@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface FieldRepository extends JpaRepository<Field, UUID> {
@@ -23,6 +24,10 @@ public interface FieldRepository extends JpaRepository<Field, UUID> {
     Page<Field> findByFilters(@Param("search") String search, Pageable pageable);
 
     Page<Field> findByOwner_Id(UUID ownerId, Pageable pageable);
+
+    Page<Field> findByOwner_IdAndParentFieldIsNull(UUID ownerId, Pageable pageable);
+
+    List<Field> findByParentField_IdOrderByIndexFieldAsc(UUID parentId);
 
     @Query("""
             SELECT f FROM Field f

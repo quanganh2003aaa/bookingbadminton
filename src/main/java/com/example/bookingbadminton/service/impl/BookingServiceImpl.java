@@ -2,6 +2,7 @@ package com.example.bookingbadminton.service.impl;
 
 import com.example.bookingbadminton.model.Enum.BookingStatus;
 import com.example.bookingbadminton.model.entity.Booking;
+import com.example.bookingbadminton.model.entity.BookingField;
 import com.example.bookingbadminton.model.entity.Field;
 import com.example.bookingbadminton.model.entity.User;
 import com.example.bookingbadminton.payload.BookingByDayResponse;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -54,13 +56,10 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Field not found"));
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        booking.setField(field);
         booking.setUser(user);
         booking.setMsisdn(msisdn);
-        booking.setIndexField(indexField);
-        booking.setStartHour(startHour);
-        booking.setEndHour(endHour);
         booking.setStatus(status);
+        syncBookingField(booking, field, startHour, endHour);
         return bookingRepository.save(booking);
     }
 
@@ -71,39 +70,59 @@ public class BookingServiceImpl implements BookingService {
         bookingRepository.save(booking);
     }
 
-    @Override
-    public List<BookingByDayResponse> findByDay(java.time.LocalDate date) {
-        LocalDateTime startOfDay = date.atStartOfDay();
-        LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
-        return bookingRepository.findByStartHourBetween(startOfDay, endOfDay).stream()
-                .map(b -> new BookingByDayResponse(
-                        b.getId(),
-                        b.getField().getId(),
-                        b.getUser().getId(),
-                        b.getMsisdn(),
-                        b.getIndexField(),
-                        b.getStartHour(),
-                        b.getEndHour(),
-                        b.getStatus()
-                ))
-                .toList();
+    private void syncBookingField(Booking booking, Field field, LocalDateTime startHour, LocalDateTime endHour) {
+        List<BookingField> links = booking.getBookingField();
+        if (links == null || links.isEmpty()) {
+            BookingField link = new BookingField();
+            link.setBooking(booking);
+            link.setField(field);
+            link.setStartHour(startHour);
+            link.setEndHour(endHour);
+            List<BookingField> newLinks = new ArrayList<>();
+            newLinks.add(link);
+            booking.setBookingField(newLinks);
+            return;
+        }
+        BookingField link = links.get(0);
+        link.setBooking(booking);
+        link.setField(field);
+        link.setStartHour(startHour);
+        link.setEndHour(endHour);
     }
 
-    @Override
-    public List<BookingByDayResponse> findByDayAndField(java.time.LocalDate date, UUID fieldId) {
-        LocalDateTime startOfDay = date.atStartOfDay();
-        LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
-        return bookingRepository.findByField_IdAndStartHourBetween(fieldId, startOfDay, endOfDay).stream()
-                .map(b -> new BookingByDayResponse(
-                        b.getId(),
-                        b.getField().getId(),
-                        b.getUser().getId(),
-                        b.getMsisdn(),
-                        b.getIndexField(),
-                        b.getStartHour(),
-                        b.getEndHour(),
-                        b.getStatus()
-                ))
-                .toList();
-    }
+//    @Override
+//    public List<BookingByDayResponse> findByDay(java.time.LocalDate date) {
+//        LocalDateTime startOfDay = date.atStartOfDay();
+//        LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
+//        return bookingRepository.findByStartHourBetween(startOfDay, endOfDay).stream()
+//                .map(b -> new BookingByDayResponse(
+//                        b.getId(),
+//                        b.getField().getId(),
+//                        b.getUser().getId(),
+//                        b.getMsisdn(),
+//                        b.getIndexField(),
+//                        b.getStartHour(),
+//                        b.getEndHour(),
+//                        b.getStatus()
+//                ))
+//                .toList();
+//    }
+//
+//    @Override
+//    public List<BookingByDayResponse> findByDayAndField(java.time.LocalDate date, UUID fieldId) {
+//        LocalDateTime startOfDay = date.atStartOfDay();
+//        LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
+//        return bookingRepository.findByField_IdAndStartHourBetween(fieldId, startOfDay, endOfDay).stream()
+//                .map(b -> new BookingByDayResponse(
+//                        b.getId(),
+//                        b.getField().getId(),
+//                        b.getUser().getId(),
+//                        b.getMsisdn(),
+//                        b.getIndexField(),
+//                        b.getStartHour(),
+//                        b.getEndHour(),
+//                        b.getStatus()
+//                ))
+//                .toList();
+//    }
 }

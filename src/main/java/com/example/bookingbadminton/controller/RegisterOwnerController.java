@@ -24,6 +24,12 @@ public class RegisterOwnerController {
 
     private final RegisterOwnerService registerOwnerService;
 
+    //API xác nhận tạo đơn đăng ký  thành công
+    @PostMapping("/confirm")
+    public ApiResponse confirm(@RequestBody @Valid RegisterOwnerConfirmRequest request) {
+        return ApiResponse.builder().result(registerOwnerService.confirm(request)).build();
+    }
+
     @GetMapping
     public ApiResponse list() {
         return ApiResponse.builder().result(registerOwnerService.findAll()).build();
@@ -52,11 +58,6 @@ public class RegisterOwnerController {
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         registerOwnerService.delete(id);
         return ResponseEntity.noContent().build();
-    }
-
-    @PostMapping("/confirm")
-    public ApiResponse confirm(@RequestBody @Valid RegisterOwnerConfirmRequest request) {
-        return ApiResponse.builder().result(registerOwnerService.confirm(request)).build();
     }
 
 }

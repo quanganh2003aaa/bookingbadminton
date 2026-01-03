@@ -111,20 +111,20 @@ public class BookingController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/by-day")
-    public ApiResponse findByDay(@RequestParam java.time.LocalDate date) {
-        return ApiResponse.builder()
-                .result(bookingService.findByDay(date))
-                .build();
-    }
-
-    @GetMapping("/field/{fieldId}/by-day")
-    public ApiResponse findByDayAndField(@PathVariable UUID fieldId,
-                                         @RequestParam java.time.LocalDate date) {
-        return ApiResponse.builder()
-                .result(bookingService.findByDayAndField(date, fieldId))
-                .build();
-    }
+//    @GetMapping("/by-day")
+//    public ApiResponse findByDay(@RequestParam java.time.LocalDate date) {
+//        return ApiResponse.builder()
+//                .result(bookingService.findByDay(date))
+//                .build();
+//    }
+//
+//    @GetMapping("/field/{fieldId}/by-day")
+//    public ApiResponse findByDayAndField(@PathVariable UUID fieldId,
+//                                         @RequestParam java.time.LocalDate date) {
+//        return ApiResponse.builder()
+//                .result(bookingService.findByDayAndField(date, fieldId))
+//                .build();
+//    }
 
     public record BookingRequest(
             UUID fieldId,

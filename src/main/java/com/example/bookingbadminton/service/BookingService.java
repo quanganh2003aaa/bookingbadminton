@@ -19,7 +19,7 @@ public interface BookingService {
 
     void delete(UUID id);
 
-    List<BookingByDayResponse> findByDay(java.time.LocalDate date);
-
-    List<BookingByDayResponse> findByDayAndField(java.time.LocalDate date, UUID fieldId);
+//    List<BookingByDayResponse> findByDay(java.time.LocalDate date);
+//
+//    List<BookingByDayResponse> findByDayAndField(java.time.LocalDate date, UUID fieldId);
 }

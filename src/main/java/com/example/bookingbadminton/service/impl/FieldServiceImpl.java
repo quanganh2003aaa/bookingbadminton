@@ -7,19 +7,20 @@ import com.example.bookingbadminton.model.entity.Owner;
 import com.example.bookingbadminton.model.entity.TimeSlot;
 import com.example.bookingbadminton.payload.FieldAdminResponse;
 import com.example.bookingbadminton.payload.FieldCardResponse;
-import com.example.bookingbadminton.payload.FieldRequest;
 import com.example.bookingbadminton.payload.FieldDetailResponse;
+import com.example.bookingbadminton.payload.FieldOwnerBookingSummary;
+import com.example.bookingbadminton.payload.FieldOwnerDailyBookingResponse;
 import com.example.bookingbadminton.payload.FieldOwnerDetailResponse;
 import com.example.bookingbadminton.payload.FieldOwnerSummaryResponse;
-import com.example.bookingbadminton.payload.FieldOwnerBookingSummary;
+import com.example.bookingbadminton.payload.FieldRequest;
 import com.example.bookingbadminton.payload.FieldUserDetailResponse;
-import com.example.bookingbadminton.repository.AccountRepository;
-import com.example.bookingbadminton.repository.FieldRepository;
-import com.example.bookingbadminton.repository.FieldImageRepository;
-import com.example.bookingbadminton.repository.OwnerRepository;
-import com.example.bookingbadminton.repository.CommentRepository;
-import com.example.bookingbadminton.repository.TimeSlotRepository;
+import com.example.bookingbadminton.repository.BookingFieldRepository;
 import com.example.bookingbadminton.repository.BookingRepository;
+import com.example.bookingbadminton.repository.CommentRepository;
+import com.example.bookingbadminton.repository.FieldImageRepository;
+import com.example.bookingbadminton.repository.FieldRepository;
+import com.example.bookingbadminton.repository.OwnerRepository;
+import com.example.bookingbadminton.repository.TimeSlotRepository;
 import com.example.bookingbadminton.service.FieldService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,20 +32,18 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class FieldServiceImpl implements FieldService {
 
     private final FieldRepository fieldRepository;
-    private final AccountRepository accountRepository;
     private final OwnerRepository ownerRepository;
     private final FieldImageRepository fieldImageRepository;
     private final CommentRepository commentRepository;
     private final TimeSlotRepository timeSlotRepository;
+    private final BookingFieldRepository bookingFieldRepository;
     private final BookingRepository bookingRepository;
 
     @Override
@@ -75,6 +74,9 @@ public class FieldServiceImpl implements FieldService {
         field.setName(request.name());
         field.setAddress(request.address());
         field.setQuantity(request.quantity());
+        if (field.getIndexField() == null) {
+            field.setIndexField(0);
+        }
         field.setMsisdn(request.msisdn());
         field.setMobileContact(request.mobileContact());
         field.setStartTime(request.startTime());
@@ -83,6 +85,9 @@ public class FieldServiceImpl implements FieldService {
         field.setLinkMap(request.linkMap());
         Field saved = fieldRepository.save(field);
         ensureTimeSlotsAlign(saved);
+        if (field.getParentField() == null && request.quantity() != null) {
+            syncSubFields(saved, request.quantity());
+        }
         return saved;
     }
 
@@ -191,6 +196,9 @@ public class FieldServiceImpl implements FieldService {
         field.setLinkMap(request.linkMap());
         Field saved = fieldRepository.save(field);
         ensureTimeSlotsAlign(saved);
+        if (saved.getParentField() == null && request.quantity() != null) {
+            syncSubFields(saved, request.quantity());
+        }
         return saved;
     }
 
@@ -198,13 +206,13 @@ public class FieldServiceImpl implements FieldService {
     public Page<FieldOwnerBookingSummary> ownerFieldBookings(UUID ownerId, Pageable pageable) {
         Owner owner = ownerRepository.findById(ownerId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found"));
-        Page<Field> page = fieldRepository.findByOwner_Id(owner.getId(), pageable);
+        Page<Field> page = fieldRepository.findByOwner_IdAndParentFieldIsNull(owner.getId(), pageable);
         LocalDate today = LocalDate.now();
-        var counts = bookingRepository.countByFieldInDay(
+        var counts = bookingRepository.countByParentFieldInDay(
                 today.atStartOfDay(),
                 today.plusDays(1).atStartOfDay()
         );
-        java.util.Map<UUID, Long> countMap = new java.util.HashMap<>();
+        Map<UUID, Long> countMap = new HashMap<>();
         for (Object[] row : counts) {
             countMap.put((UUID) row[0], (Long) row[1]);
         }
@@ -214,6 +222,55 @@ public class FieldServiceImpl implements FieldService {
                 countMap.getOrDefault(f.getId(), 0L),
                 f.getActive()
         ));
+    }
+
+    @Override
+    public FieldOwnerDailyBookingResponse ownerDailyBookings(UUID ownerId, UUID fieldId, LocalDate date) {
+        Owner owner = ownerRepository.findById(ownerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found"));
+        Field parent = get(fieldId);
+        if (!parent.getOwner().getId().equals(owner.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Field not owned by this account");
+        }
+        if (parent.getParentField() != null) {
+            parent = parent.getParentField();
+        }
+
+        var startOfDay = date.atStartOfDay();
+        var endOfDay = date.plusDays(1).atStartOfDay();
+        var bookings = bookingFieldRepository.findByParentFieldAndDay(parent.getId(), startOfDay, endOfDay);
+
+        Map<UUID, List<FieldOwnerDailyBookingResponse.BookingSlot>> slotsByField = new HashMap<>();
+        for (var bf : bookings) {
+            var slot = new FieldOwnerDailyBookingResponse.BookingSlot(
+                    bf.getBooking() != null ? bf.getBooking().getId() : null,
+                    bf.getStartHour(),
+                    bf.getEndHour(),
+                    bf.getBooking() != null ? bf.getBooking().getMsisdn() : null,
+                    bf.getBooking() != null ? bf.getBooking().getStatus() : null
+            );
+            slotsByField.computeIfAbsent(bf.getField().getId(), k -> new ArrayList<>()).add(slot);
+        }
+
+        List<Field> children = parent.getSubFields();
+        if (children == null || children.isEmpty()) {
+            children = List.of(parent);
+        }
+
+        var subFieldBookings = children.stream()
+                .map(f -> new FieldOwnerDailyBookingResponse.SubFieldBooking(
+                        f.getId(),
+                        f.getName(),
+                        slotsByField.getOrDefault(f.getId(), List.of())
+                ))
+                .toList();
+
+        return new FieldOwnerDailyBookingResponse(
+                parent.getId(),
+                parent.getName(),
+                date,
+                subFieldBookings
+        );
     }
 
     @Override
@@ -293,7 +350,6 @@ public class FieldServiceImpl implements FieldService {
         }
 
         var existing = timeSlotRepository.findByField_IdOrderByStartHour(field.getId());
-        // Không có slot -> tạo slot bao toàn bộ
         if (existing.isEmpty()) {
             TimeSlot slot = new TimeSlot();
             slot.setField(field);
@@ -304,15 +360,13 @@ public class FieldServiceImpl implements FieldService {
             return;
         }
 
-        // Lọc và điều chỉnh timeslot theo khung giờ mới, đồng thời cắt bỏ phần thừa
-        java.util.List<TimeSlot> processed = new java.util.ArrayList<>();
+        List<TimeSlot> processed = new java.util.ArrayList<>();
         LocalTime expectedStart = field.getStartTime();
 
         for (TimeSlot s : existing) {
             if (s.getStartHour() == null || s.getEndHour() == null || !s.getStartHour().isBefore(s.getEndHour())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid timeslot range");
             }
-            // slot kết thúc trước giờ mở cửa mới -> bỏ qua
             if (!s.getEndHour().isAfter(field.getStartTime())) {
                 continue;
             }
@@ -322,7 +376,6 @@ public class FieldServiceImpl implements FieldService {
                 continue;
             }
             if (!start.equals(expectedStart)) {
-                // đảm bảo liên tục
                 start = expectedStart;
             }
             TimeSlot slot = new TimeSlot();
@@ -337,7 +390,6 @@ public class FieldServiceImpl implements FieldService {
             }
         }
 
-        // Nếu chưa phủ tới endTime, kéo dài slot cuối hoặc tạo mới
         if (processed.isEmpty()) {
             TimeSlot slot = new TimeSlot();
             slot.setField(field);
@@ -352,8 +404,90 @@ public class FieldServiceImpl implements FieldService {
             }
         }
 
-        // Lưu: xóa hết slot cũ, lưu danh sách mới (toàn bộ là entity mới hoặc đã chỉnh)
         timeSlotRepository.deleteAll(existing);
         timeSlotRepository.saveAll(processed);
+    }
+
+    private void syncSubFields(Field parent, int newQuantity) {
+        // Đồng bộ thông tin chung cho sân cha
+        parent.setIndexField(0);
+        fieldRepository.save(parent);
+
+        List<Field> subs = fieldRepository.findByParentField_IdOrderByIndexFieldAsc(parent.getId());
+        int currentActive = (int) subs.stream().filter(s -> s.getDeletedAt() == null).count();
+        int maxIndex = subs.stream()
+                .map(Field::getIndexField)
+                .filter(Objects::nonNull)
+                .max(Integer::compareTo)
+                .orElse(0);
+
+        // Cập nhật dữ liệu chung cho các sân con còn hoạt động
+        subs.stream()
+                .filter(s -> s.getDeletedAt() == null)
+                .forEach(sf -> {
+                    copyCommonFields(sf, parent);
+                    fieldRepository.save(sf);
+                });
+
+        if (newQuantity < currentActive) {
+            int toRemove = currentActive - newQuantity;
+            LocalDateTime now = LocalDateTime.now();
+            var removable = subs.stream()
+                    .filter(s -> s.getDeletedAt() == null)
+                    .sorted(Comparator.comparing(Field::getIndexField, Comparator.nullsLast(Integer::compareTo)).reversed())
+                    .toList();
+            for (int i = 0; i < toRemove && i < removable.size(); i++) {
+                Field sf = removable.get(i);
+                sf.setDeletedAt(now);
+                fieldRepository.save(sf);
+            }
+            return;
+        }
+
+        if (newQuantity > currentActive) {
+            int need = newQuantity - currentActive;
+            // Tái sử dụng sân con đã xóa nếu có
+            var reusable = subs.stream()
+                    .filter(s -> s.getDeletedAt() != null)
+                    .sorted(Comparator.comparing(Field::getIndexField, Comparator.nullsLast(Integer::compareTo)))
+                    .toList();
+            for (Field sf : reusable) {
+                if (need <= 0) break;
+                sf.setDeletedAt(null);
+                if (sf.getIndexField() == null) {
+                    sf.setIndexField(++maxIndex);
+                }
+                copyCommonFields(sf, parent);
+                fieldRepository.save(sf);
+                need--;
+            }
+            while (need > 0) {
+                Field sf = new Field();
+                sf.setParentField(parent);
+                sf.setIndexField(++maxIndex);
+                copyCommonFields(sf, parent);
+                sf.setQuantity(0);
+                fieldRepository.save(sf);
+                need--;
+            }
+        }
+    }
+
+    private void copyCommonFields(Field target, Field parent) {
+        target.setOwner(parent.getOwner());
+        target.setAddress(parent.getAddress());
+        target.setMsisdn(parent.getMsisdn());
+        target.setMobileContact(parent.getMobileContact());
+        target.setStartTime(parent.getStartTime());
+        target.setEndTime(parent.getEndTime());
+        target.setActive(parent.getActive());
+        target.setLinkMap(parent.getLinkMap());
+        if (target.getIndexField() != null && target.getIndexField() > 0) {
+            target.setName(parent.getName() + " - Sân " + target.getIndexField());
+            target.setQuantity(0);
+        } else {
+            target.setName(parent.getName());
+            target.setQuantity(parent.getQuantity());
+        }
     }
 }

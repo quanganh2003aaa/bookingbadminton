@@ -205,6 +205,8 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
         field.setEndTime(null);
         field.setActive(ActiveStatus.INACTIVE);
         field.setLinkMap(registerOwner.getLinkMap());
+        field.setIndexField(0);
+        field.setQuantity(0);
         Field savedField = fieldRepository.save(field);
 
         registerOwner.setActive(RegisterStatus.ACCEPT);
