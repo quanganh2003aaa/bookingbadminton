@@ -24,11 +24,16 @@ import com.example.bookingbadminton.service.FieldImageService;
 import com.example.bookingbadminton.model.Enum.TypeImage;
 import com.example.bookingbadminton.service.RegisterOwnerService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -43,6 +48,8 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
     private final OwnerRepository ownerRepository;
     private final FieldRepository fieldRepository;
     private final FieldImageService fieldImageService;
+    @Value("${file.upload-dir:uploads}")
+    private String uploadBaseDir;
 
     @Override
     public List<RegisterOwner> findAll() {
@@ -75,7 +82,7 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
         registerOwner.setGmail(request.gmail());
         registerOwner.setActive(request.active());
         registerOwner.setLinkMap(request.linkMap());
-        registerOwner.setImgQr(request.imgQr());
+        registerOwner.setImgQr(storeBase64Image(request.imgQr(), uploadBaseDir, "register-owners"));
         return registerOwnerRepository.save(registerOwner);
     }
 
@@ -131,9 +138,9 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
         registerOwner.setAddress(draft.address());
         registerOwner.setMobileContact(draft.mobileContact());
         registerOwner.setGmail(account.getGmail());
-        registerOwner.setActive(RegisterStatus.INACCEPT);
+        registerOwner.setActive(RegisterStatus.PENDING);
         registerOwner.setLinkMap(draft.linkMap());
-        registerOwner.setImgQr(draft.imgQr());
+        registerOwner.setImgQr(storeBase64Image(draft.imgQr(), uploadBaseDir, "register-owners"));
         RegisterOwner saved = registerOwnerRepository.save(registerOwner);
         return new RegisterOwnerResponse(
                 saved.getId(),
@@ -288,4 +295,39 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
         return createdTime == null || now.isAfter(createdTime.plusSeconds(60));
     }
 
+    private String storeBase64Image(String dataUri, String baseDir, String subFolder) {
+        if (dataUri == null || dataUri.isBlank()) {
+            return null;
+        }
+        // Nếu đã là đường dẫn (http/https/local) thì giữ nguyên
+        String lower = dataUri.toLowerCase();
+        if (lower.startsWith("http://") || lower.startsWith("https://") || lower.startsWith("uploads/")) {
+            return dataUri;
+        }
+        String base64Part = dataUri;
+        String ext = ".png";
+        if (dataUri.startsWith("data:")) {
+            int comma = dataUri.indexOf(',');
+            if (comma > 0) {
+                String header = dataUri.substring(5, comma); // after data:
+                base64Part = dataUri.substring(comma + 1);
+                if (header.contains("jpeg")) {
+                    ext = ".jpg";
+                } else if (header.contains("png")) {
+                    ext = ".png";
+                }
+            }
+        }
+        byte[] bytes = Base64.getDecoder().decode(base64Part);
+        try {
+            Path dir = Path.of(baseDir, subFolder);
+            Files.createDirectories(dir);
+            String filename = UUID.randomUUID() + ext;
+            Path target = dir.resolve(filename);
+            Files.write(target, bytes, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            return target.toString();
+        } catch (Exception ex) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Không lưu được ảnh QR", ex);
+        }
+    }
 }

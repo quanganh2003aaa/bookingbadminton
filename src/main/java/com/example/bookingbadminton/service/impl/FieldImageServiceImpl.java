@@ -24,7 +24,7 @@ import java.nio.file.StandardCopyOption;
 @Service
 @RequiredArgsConstructor
 public class FieldImageServiceImpl implements FieldImageService {
-    @Value("${file.upload-dir:uploads/fields}")
+    @Value("${file.upload-dir:uploads}")
     private String uploadDir;
 
     private final FieldImageRepository fieldImageRepository;

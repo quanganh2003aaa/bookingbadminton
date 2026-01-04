@@ -46,6 +46,6 @@ public class RegisterOwner extends BaseModel {
     @Column(name = "link_map", columnDefinition = "TEXT")
     private String linkMap;
 
-    @Column(name = "img_qr", columnDefinition = "TEXT")
+    @Column(name = "img_qr", columnDefinition = "LONGTEXT")
     private String imgQr;
 }

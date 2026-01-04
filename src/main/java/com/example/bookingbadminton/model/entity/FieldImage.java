@@ -34,6 +34,6 @@ public class FieldImage extends BaseModel {
     @Enumerated(EnumType.STRING)
     private TypeImage type;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "LONGTEXT")
     private String image;
 }

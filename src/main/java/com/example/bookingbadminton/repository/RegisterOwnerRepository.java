@@ -18,6 +18,7 @@ public interface RegisterOwnerRepository extends JpaRepository<RegisterOwner, UU
                    LOWER(r.name) LIKE LOWER(CONCAT('%', :search, '%')) OR
                    LOWER(r.gmail) LIKE LOWER(CONCAT('%', :search, '%'))
               )
+            ORDER BY r.createdAt DESC
             """)
     List<RegisterOwner> findByFilters(@Param("status") RegisterStatus status,
                                       @Param("search") String search);
