@@ -99,10 +99,6 @@ public class FieldController {
 
 
 
-
-
-
-
     @PostMapping
     public ResponseEntity<ApiResponse> create(@RequestBody FieldRequest r) {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.builder()

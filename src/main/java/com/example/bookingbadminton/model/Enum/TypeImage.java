@@ -1,5 +1,5 @@
 package com.example.bookingbadminton.model.Enum;
 
 public enum TypeImage {
-    REGISTER, USING
+    REGISTER, USING, QR
 }

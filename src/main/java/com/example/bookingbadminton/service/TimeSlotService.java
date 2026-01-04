@@ -21,5 +21,5 @@ public interface TimeSlotService {
 
     List<TimeSlotDTO> listByField(UUID fieldId);
 
-    List<TimeSlot> setSlots(UUID fieldId, List<TimeSlotItemRequest> slots);
+    List<TimeSlotDTO> setSlots(UUID fieldId, List<TimeSlotItemRequest> slots);
 }

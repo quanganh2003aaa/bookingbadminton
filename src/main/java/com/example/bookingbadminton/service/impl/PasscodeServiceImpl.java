@@ -119,8 +119,8 @@ public class PasscodeServiceImpl implements PasscodeService {
             passcode.setCode(generateCode());
             passcode.setTime(now);
         }
-        Passcode saved = passcodeRepository.save(passcode);
-        return new RegisterOwnerPasscodeResponse(account.getId(), saved.getId(), saved.getCode());
+        passcodeRepository.save(passcode);
+        return new RegisterOwnerPasscodeResponse(account.getId());
     }
 
     private void applyUsageLimits(Passcode passcode, LocalDateTime now) {

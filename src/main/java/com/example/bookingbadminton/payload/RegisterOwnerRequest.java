@@ -14,6 +14,7 @@ public record RegisterOwnerRequest(
         @NotBlank @Size(max = 10) String mobileContact,
         @NotBlank @Size(max = 50) String gmail,
         @NotNull RegisterStatus active,
-        String linkMap
+        String linkMap,
+        String imgQr
 ) {
 }

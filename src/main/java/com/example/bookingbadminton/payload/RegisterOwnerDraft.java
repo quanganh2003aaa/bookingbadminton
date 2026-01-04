@@ -7,6 +7,7 @@ public record RegisterOwnerDraft(
         @NotBlank @Size(max = 255) String name,
         @NotBlank String address,
         @NotBlank @Size(max = 10) String mobileContact,
-        String linkMap
+        String linkMap,
+        String imgQr
 ) {
 }

@@ -15,7 +15,7 @@ public record FieldOwnerDailyBookingResponse(
 ) {
     public record SubFieldBooking(
             UUID id,
-            String name,
+            Integer indexField,
             List<BookingSlot> bookings
     ) {}
 

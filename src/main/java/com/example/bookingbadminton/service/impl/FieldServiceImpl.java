@@ -25,6 +25,7 @@ import com.example.bookingbadminton.service.FieldService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -101,13 +102,21 @@ public class FieldServiceImpl implements FieldService {
     @Override
     public Page<FieldCardResponse> search(String search, ActiveStatus active, Pageable pageable) {
         Page<Field> page = fieldRepository.findByFiltersForUser(search, active, pageable);
-        return page.map(this::toCardResponse);
+        List<Field> parents = page.getContent().stream()
+                .filter(f -> f.getParentField() == null)
+                .toList();
+        Page<Field> filtered = new PageImpl<>(parents, pageable, parents.size());
+        return filtered.map(this::toCardResponse);
     }
 
     @Override
     public Page<FieldAdminResponse> adminList(String search, Pageable pageable) {
         Page<Field> page = fieldRepository.findByFilters(search, pageable);
-        return page.map(f -> new FieldAdminResponse(
+        List<Field> parents = page.getContent().stream()
+                .filter(f -> f.getParentField() == null)
+                .toList();
+        Page<Field> filtered = new PageImpl<>(parents, pageable, parents.size());
+        return filtered.map(f -> new FieldAdminResponse(
                 f.getId(),
                 f.getName(),
                 f.getOwner() != null && f.getOwner().getAccount() != null ? f.getOwner().getAccount().getGmail() : null
@@ -136,7 +145,7 @@ public class FieldServiceImpl implements FieldService {
     public Page<FieldOwnerSummaryResponse> ownerFields(UUID ownerId, Pageable pageable) {
         Owner owner = ownerRepository.findById(ownerId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found"));
-        Page<Field> page = fieldRepository.findByOwner_Id(owner.getId(), pageable);
+        Page<Field> page = fieldRepository.findByOwner_IdAndParentFieldIsNull(owner.getId(), pageable);
         return page.map(this::toOwnerSummary);
     }
 
@@ -256,11 +265,14 @@ public class FieldServiceImpl implements FieldService {
         if (children == null || children.isEmpty()) {
             children = List.of(parent);
         }
+        children = children.stream()
+                .sorted(Comparator.comparing(f -> f.getIndexField() == null ? Integer.MAX_VALUE : f.getIndexField()))
+                .toList();
 
         var subFieldBookings = children.stream()
                 .map(f -> new FieldOwnerDailyBookingResponse.SubFieldBooking(
                         f.getId(),
-                        f.getName(),
+                        f.getIndexField(),
                         slotsByField.getOrDefault(f.getId(), List.of())
                 ))
                 .toList();

@@ -20,6 +20,8 @@ import com.example.bookingbadminton.repository.FieldRepository;
 import com.example.bookingbadminton.repository.OwnerRepository;
 import com.example.bookingbadminton.repository.PasscodeRepository;
 import com.example.bookingbadminton.repository.RegisterOwnerRepository;
+import com.example.bookingbadminton.service.FieldImageService;
+import com.example.bookingbadminton.model.Enum.TypeImage;
 import com.example.bookingbadminton.service.RegisterOwnerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -40,6 +42,7 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
     private final PasscodeRepository passcodeRepository;
     private final OwnerRepository ownerRepository;
     private final FieldRepository fieldRepository;
+    private final FieldImageService fieldImageService;
 
     @Override
     public List<RegisterOwner> findAll() {
@@ -72,6 +75,7 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
         registerOwner.setGmail(request.gmail());
         registerOwner.setActive(request.active());
         registerOwner.setLinkMap(request.linkMap());
+        registerOwner.setImgQr(request.imgQr());
         return registerOwnerRepository.save(registerOwner);
     }
 
@@ -129,6 +133,7 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
         registerOwner.setGmail(account.getGmail());
         registerOwner.setActive(RegisterStatus.INACCEPT);
         registerOwner.setLinkMap(draft.linkMap());
+        registerOwner.setImgQr(draft.imgQr());
         RegisterOwner saved = registerOwnerRepository.save(registerOwner);
         return new RegisterOwnerResponse(
                 saved.getId(),
@@ -138,7 +143,8 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
                 saved.getMobileContact(),
                 saved.getGmail(),
                 saved.getActive(),
-                saved.getLinkMap()
+                saved.getLinkMap(),
+                saved.getImgQr()
         );
     }
 
@@ -169,6 +175,7 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
                 r.getGmail(),
                 r.getActive(),
                 r.getLinkMap(),
+                r.getImgQr(),
                 r.getCreatedAt(),
                 r.getUpdatedAt(),
                 r.getDeletedAt()
@@ -208,6 +215,9 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
         field.setIndexField(0);
         field.setQuantity(0);
         Field savedField = fieldRepository.save(field);
+        if (registerOwner.getImgQr() != null) {
+            fieldImageService.create(savedField.getId(), TypeImage.QR, registerOwner.getImgQr());
+        }
 
         registerOwner.setActive(RegisterStatus.ACCEPT);
         registerOwnerRepository.save(registerOwner);

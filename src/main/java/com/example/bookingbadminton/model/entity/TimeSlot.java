@@ -27,7 +27,7 @@ public class TimeSlot extends BaseModel {
     @JoinColumn(name = "id_field", nullable = false)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    @JsonIgnoreProperties({"owner", "hibernateLazyInitializer", "handler"})
+    @JsonIgnoreProperties({"owner", "hibernateLazyInitializer", "handler", "parentField", "subFields", "bookingField"})
     private Field field;
 
     private Integer price;

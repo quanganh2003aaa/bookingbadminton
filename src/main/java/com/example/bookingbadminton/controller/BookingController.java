@@ -6,6 +6,7 @@ import com.example.bookingbadminton.model.entity.Booking;
 import com.example.bookingbadminton.model.entity.Invoice;
 import com.example.bookingbadminton.payload.ApiResponse;
 import com.example.bookingbadminton.payload.BookingByDayResponse;
+import com.example.bookingbadminton.payload.FieldOwnerDailyBookingResponse;
 import com.example.bookingbadminton.service.BookingService;
 import com.example.bookingbadminton.service.InvoiceService;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +26,13 @@ public class BookingController {
 
     private final BookingService bookingService;
     private final InvoiceService invoiceService;
+
+    //API chi tiết booking của 1 sân cha
+    @GetMapping("/field/{fieldId}/by-day")
+    public ApiResponse bookingsByDay(@PathVariable UUID fieldId, @RequestParam LocalDate date) {
+        FieldOwnerDailyBookingResponse result = bookingService.bookingsByDayForField(fieldId, date);
+        return ApiResponse.builder().result(result).build();
+    }
 
     @GetMapping
     public ApiResponse list() {

@@ -14,6 +14,7 @@ public record RegisterOwnerDetailResponse(
         String gmail,
         RegisterStatus status,
         String linkMap,
+        String imgQr,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         LocalDateTime deletedAt

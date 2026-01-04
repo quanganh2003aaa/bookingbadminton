@@ -34,7 +34,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
     @Override
     public TimeSlot get(UUID id) {
         return timeSlotRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Time slot not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy khung giờ!"));
     }
 
     @Override
@@ -51,7 +51,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
 
     private TimeSlot saveSlot(TimeSlot slot, UUID fieldId, Integer price, LocalTime startHour, LocalTime endHour) {
         Field field = fieldRepository.findById(fieldId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Field not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sân!"));
         slot.setField(field);
         slot.setPrice(price);
         slot.setStartHour(startHour);
@@ -72,14 +72,14 @@ public class TimeSlotServiceImpl implements TimeSlotService {
     }
 
     @Override
-    public List<TimeSlot> setSlots(UUID fieldId, List<TimeSlotItemRequest> slots) {
+    public List<TimeSlotDTO> setSlots(UUID fieldId, List<TimeSlotItemRequest> slots) {
         Field field = fieldRepository.findById(fieldId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Field not found"));
         if (field.getStartTime() == null || field.getEndTime() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Field operating time not set");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chưa thiết lập giờ hoạt động của sân");
         }
         if (slots == null || slots.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Timeslot list is empty");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Danh sách khung giờ trống");
         }
         slots = slots.stream()
                 .sorted(Comparator.comparing(TimeSlotItemRequest::startHour))
@@ -87,18 +87,18 @@ public class TimeSlotServiceImpl implements TimeSlotService {
         LocalTime expectedStart = field.getStartTime();
         for (TimeSlotItemRequest s : slots) {
             if (s.startHour() == null || s.endHour() == null || !s.startHour().isBefore(s.endHour())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid time range");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Khoảng thời gian không hợp lệ");
             }
             if (!s.startHour().equals(expectedStart)) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Timeslots must be continuous from field start time");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Khung giờ phải liên tục từ giờ mở cửa");
             }
             expectedStart = s.endHour();
             if (expectedStart.isAfter(field.getEndTime())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Timeslots exceed field end time");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Khung giờ vượt quá giờ đóng cửa");
             }
         }
         if (!expectedStart.equals(field.getEndTime())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Timeslots must end at field end time");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Khung giờ phải kết thúc đúng giờ đóng cửa");
         }
 
         List<TimeSlot> existing = timeSlotRepository.findByField_IdOrderByStartHour(fieldId);
@@ -111,7 +111,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
             slot.setStartHour(s.startHour());
             slot.setEndHour(s.endHour());
             timeSlotRepository.save(slot);
-            return slot;
+            return new TimeSlotDTO(slot);
         }).toList();
     }
 }

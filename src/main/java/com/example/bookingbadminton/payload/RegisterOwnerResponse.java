@@ -12,6 +12,7 @@ public record RegisterOwnerResponse(
         String mobileContact,
         String gmail,
         RegisterStatus active,
-        String linkMap
+        String linkMap,
+        String imgQr
 ) {
 }
