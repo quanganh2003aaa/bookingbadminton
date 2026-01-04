@@ -426,31 +426,30 @@ public class FieldServiceImpl implements FieldService {
         fieldRepository.save(parent);
 
         List<Field> subs = fieldRepository.findByParentField_IdOrderByIndexFieldAsc(parent.getId());
-        int currentActive = (int) subs.stream().filter(s -> s.getDeletedAt() == null).count();
+        List<Field> activeSubs = subs.stream().filter(s -> s.getDeletedAt() == null).toList();
+        int currentActive = activeSubs.size();
         int maxIndex = subs.stream()
                 .map(Field::getIndexField)
                 .filter(Objects::nonNull)
                 .max(Integer::compareTo)
                 .orElse(0);
 
-        // Cập nhật dữ liệu chung cho các sân con còn hoạt động
-        subs.stream()
-                .filter(s -> s.getDeletedAt() == null)
-                .forEach(sf -> {
-                    copyCommonFields(sf, parent);
-                    fieldRepository.save(sf);
-                });
+        // Cập nhật dữ liệu chung cho các sân con đang hoạt động
+        activeSubs.forEach(sf -> {
+            copyCommonFields(sf, parent);
+            fieldRepository.save(sf);
+        });
 
         if (newQuantity < currentActive) {
             int toRemove = currentActive - newQuantity;
             LocalDateTime now = LocalDateTime.now();
-            var removable = subs.stream()
-                    .filter(s -> s.getDeletedAt() == null)
+            var removable = activeSubs.stream()
                     .sorted(Comparator.comparing(Field::getIndexField, Comparator.nullsLast(Integer::compareTo)).reversed())
                     .toList();
             for (int i = 0; i < toRemove && i < removable.size(); i++) {
                 Field sf = removable.get(i);
                 sf.setDeletedAt(now);
+                sf.setActive(ActiveStatus.INACTIVE);
                 fieldRepository.save(sf);
             }
             return;
@@ -458,21 +457,6 @@ public class FieldServiceImpl implements FieldService {
 
         if (newQuantity > currentActive) {
             int need = newQuantity - currentActive;
-            // Tái sử dụng sân con đã xóa nếu có
-            var reusable = subs.stream()
-                    .filter(s -> s.getDeletedAt() != null)
-                    .sorted(Comparator.comparing(Field::getIndexField, Comparator.nullsLast(Integer::compareTo)))
-                    .toList();
-            for (Field sf : reusable) {
-                if (need <= 0) break;
-                sf.setDeletedAt(null);
-                if (sf.getIndexField() == null) {
-                    sf.setIndexField(++maxIndex);
-                }
-                copyCommonFields(sf, parent);
-                fieldRepository.save(sf);
-                need--;
-            }
             while (need > 0) {
                 Field sf = new Field();
                 sf.setParentField(parent);

@@ -27,38 +27,8 @@ public class AdminController {
     private final FieldService fieldService;
     private final RegisterOwnerService registerOwnerService;
 
-//    @GetMapping
-//    public ApiResponse list() {
-//        return ApiResponse.builder().result(adminService.findAll()).build();
-//    }
-
-//    @GetMapping("/{id}")
-//    public ApiResponse get(@PathVariable UUID id) {
-//        return ApiResponse.builder().result(adminService.get(id)).build();
-//    }
-
-//    @PostMapping
-//    public ResponseEntity<ApiResponse> create(@RequestBody CreateAdminRequest request) {
-//        Admin saved = adminService.create(request.accountId(), request.name());
-//        return ResponseEntity.status(HttpStatus.CREATED)
-//                .body(ApiResponse.builder().result(saved).build());
-//    }
-//
-//    @PutMapping("/{id}")
-//    public ApiResponse update(@PathVariable UUID id, @RequestBody CreateAdminRequest request) {
-//        return ApiResponse.builder()
-//                .result(adminService.update(id, request.accountId(), request.name()))
-//                .build();
-//    }
-//
-//    @DeleteMapping("/{id}")
-//    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-//        adminService.delete(id);
-//        return ResponseEntity.noContent().build();
-//    }
-
     //API admin danh sách tài khoản người dùng
-    @GetMapping("/list-users")
+    @GetMapping("/manage-user")
     public ApiResponse adminList(@RequestParam(defaultValue = "0") int page,
                                  @RequestParam(defaultValue = "10") int size,
                                  @RequestParam(required = false) String search,
@@ -68,7 +38,7 @@ public class AdminController {
     }
 
     //API admin danh sách sân cầu
-    @GetMapping("/list-fields")
+    @GetMapping("/manage-field")
     public ApiResponse adminList(@RequestParam(defaultValue = "0") int page,
                                  @RequestParam(defaultValue = "10") int size,
                                  @RequestParam(required = false) String search) {
@@ -78,7 +48,7 @@ public class AdminController {
     }
 
     //API admin danh sách đơn đăng ký quản lý
-    @GetMapping("/list-register-owner")
+    @GetMapping("/manage-register-owner")
     public ApiResponse adminList(@RequestParam(required = false) RegisterStatus status,
                                  @RequestParam(required = false) String search) {
         return ApiResponse.builder()
@@ -87,13 +57,13 @@ public class AdminController {
     }
 
     //API admin chấp thuận đơn đăng ký quản lý
-    @PostMapping("/{id}/approve-register-owner")
+    @PostMapping("/{id}/approve")
     public ApiResponse approve(@PathVariable UUID id) {
         return ApiResponse.builder().result(registerOwnerService.approve(id)).build();
     }
 
     //API admin không chấp thuận đơn đăng ký quản lý
-    @PostMapping("/{id}/reject-register-owner")
+    @PostMapping("/{id}/reject")
     public ApiResponse reject(@PathVariable UUID id) {
         RegisterOwnerRejectResponse result = registerOwnerService.reject(id);
         return ApiResponse.builder().result(result).build();
