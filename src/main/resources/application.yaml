@@ -12,7 +12,78 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
         type:
           preferred_uuid_jdbc_type: CHAR
+
+  # Redis
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+
+  #SendGrid
+  sendGrid:
+    apiKey: ${SENDGRID_API_KEY}
+    fromEmail: phamquanganh20122003@gmail.com
+    templateRegistrationId: d-1db9a7cd44094c3d8e90826aa8d4334d
+    templateForgotId: d-a71ca0b41fc1437ca11a3002a0235c19
+    imagePrev: https://res.ckeycloakloudinary.com/dgwnoquie/image/upload/v1755789933/image-43_f3kmgh.jpg
+    imageNext: https://res.cloudinary.com/dgwnoquie/image/upload/v1755790009/KHACH-BEP-15_bj8u43.jpg
+    logo: https://res.cloudinary.com/dgwnoquie/image/upload/v1755791051/HAUS-logo_byhum7.jpg
 file:
   upload-dir: 'C:\Users\My Computer\OneDrive\Desktop\hoctap\doantotnghiep\bookingbadminton-frontend\public\upload'
 jwt:
   signerKey: "woER+xJYjx3gWeMUrzWY0UhqmmX5I3iALNaq1JwvNlIS0pG/C4Lw/bCBt9/t16Fr\n"
+
+#KeyCloak
+keycloak:
+  serverUrl: ${KEYCLOAK_SERVERURL}
+  realm: ${KEYCLOAK_REALM}
+  clientId: ${KEYCLOAK_CLIENTID}
+  clientSecret: ${KEYCLOAK_CLIENTSECRET}
+  adminUser: ${KEYCLOAK_ADMINUSER}
+  adminPassword: ${KEYCLOAK_ADMINPASSWORD}
+
+#Rate Limiting
+rate-limit:
+  enabled: true
+  storage-type: memory
+  whitelist-ips:
+    - 127.0.0.1
+    - 0:0:0:0:0:0:0:1
+  default:
+    capacity: 1000
+    refill-tokens: 1000
+    refill-duration: PT1H
+  per-ip:
+    capacity: 200
+    refill-tokens: 200
+    refill-duration: PT10M
+  endpoints:
+    - path: /api/v1/auth/login
+      capacity: 5
+      refill-tokens: 5
+      refill-duration: PT1M
+      by-ip: true
+
+# File Upload Security
+file-upload:
+  enabled: true
+  max-file-size: 10485760      # 10MB
+  max-image-size: 5242880       # 5MB
+  allowed-image-types:
+    - image/jpeg
+    - image/png
+    - image/gif
+    - image/webp
+  allowed-document-types:
+    - application/pdf
+  virus-scan:
+    enabled: true
+    clamav-host: localhost
+    clamav-port: 3310
+    timeout: 30000
+
+#Cloudinary
+cloudinary:
+  cloud_name: ${CLOUDINARY_NAME:dgwnoquie}
+  api_key: ${CLOUDINARY_API_KEY:671838345639772}
+  secret_key: ${CLOUDINARY_SECRET_KEY:-xdwjAMbATWoIvkpbT_-6K5TuIg}
