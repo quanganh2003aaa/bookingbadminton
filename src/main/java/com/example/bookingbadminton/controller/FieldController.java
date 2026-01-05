@@ -41,8 +41,8 @@ public class FieldController {
         return ApiResponse.builder().result(detail).build();
     }
 
-    //API user chi tiết sân
-    @GetMapping("/{id}/user-detail")
+    //API chi tiết sân - public
+    @GetMapping("/{id}/detail")
     public ApiResponse userDetail(@PathVariable UUID id) {
         FieldUserDetailResponse detail = fieldService.userDetail(id);
         return ApiResponse.builder().result(detail).build();
@@ -57,7 +57,7 @@ public class FieldController {
     }
 
     //API owner chi tiết tình trạng sân
-    @GetMapping("/owner/{id:[0-9a-fA-F\\-]{36}}/bookings")
+    @GetMapping("/{id:[0-9a-fA-F\\-]{36}}/bookings")
     public ApiResponse ownerDailyBookings(@PathVariable UUID id,
                                           @RequestParam UUID ownerId,
                                           @RequestParam LocalDate date) {
@@ -88,14 +88,7 @@ public class FieldController {
 
 
 
-    @GetMapping("/owner/bookings")
-    public ApiResponse ownerBookingSummary(@RequestParam UUID ownerId,
-                                           @RequestParam(defaultValue = "0") int page,
-                                           @RequestParam(defaultValue = "10") int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<FieldOwnerBookingSummary> result = fieldService.ownerFieldBookings(ownerId, pageable);
-        return ApiResponse.builder().result(PageResponse.from(result)).build();
-    }
+
 
 
 

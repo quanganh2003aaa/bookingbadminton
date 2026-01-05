@@ -4,6 +4,8 @@ import com.example.bookingbadminton.model.Enum.BookingStatus;
 import com.example.bookingbadminton.model.entity.Booking;
 import com.example.bookingbadminton.payload.BookingByDayResponse;
 import com.example.bookingbadminton.payload.FieldOwnerDailyBookingResponse;
+import com.example.bookingbadminton.payload.TempBookingRequest;
+import com.example.bookingbadminton.payload.TempBookingResponse;
 
 import java.time.LocalDateTime;
 import java.time.LocalDate;
@@ -22,6 +24,8 @@ public interface BookingService {
     void delete(UUID id);
 
     FieldOwnerDailyBookingResponse bookingsByDayForField(UUID fieldId, LocalDate date);
+
+    TempBookingResponse createTempPendingBooking(TempBookingRequest request);
 
 //    List<BookingByDayResponse> findByDay(java.time.LocalDate date);
 //

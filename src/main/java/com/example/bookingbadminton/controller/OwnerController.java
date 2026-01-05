@@ -1,6 +1,7 @@
 package com.example.bookingbadminton.controller;
 
 import com.example.bookingbadminton.payload.ApiResponse;
+import com.example.bookingbadminton.payload.FieldOwnerBookingSummary;
 import com.example.bookingbadminton.payload.FieldOwnerSummaryResponse;
 import com.example.bookingbadminton.payload.PageResponse;
 import com.example.bookingbadminton.service.FieldService;
@@ -27,6 +28,15 @@ public class OwnerController {
                                  @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<FieldOwnerSummaryResponse> result = fieldService.ownerFields(ownerId, pageable);
+        return ApiResponse.builder().result(PageResponse.from(result)).build();
+    }
+
+    @GetMapping("/field-booking")
+    public ApiResponse ownerBookingSummary(@RequestParam UUID ownerId,
+                                           @RequestParam(defaultValue = "0") int page,
+                                           @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<FieldOwnerBookingSummary> result = fieldService.ownerFieldBookings(ownerId, pageable);
         return ApiResponse.builder().result(PageResponse.from(result)).build();
     }
 }

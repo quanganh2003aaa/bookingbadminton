@@ -7,6 +7,8 @@ import com.example.bookingbadminton.model.entity.Invoice;
 import com.example.bookingbadminton.payload.ApiResponse;
 import com.example.bookingbadminton.payload.BookingByDayResponse;
 import com.example.bookingbadminton.payload.FieldOwnerDailyBookingResponse;
+import com.example.bookingbadminton.payload.TempBookingRequest;
+import com.example.bookingbadminton.payload.TempBookingResponse;
 import com.example.bookingbadminton.service.BookingService;
 import com.example.bookingbadminton.service.InvoiceService;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +36,13 @@ public class BookingController {
         return ApiResponse.builder().result(result).build();
     }
 
+    //API tạo booking tạm thời
+    @PostMapping("/pending")
+    public ApiResponse createTempPending(@RequestBody TempBookingRequest request) {
+        TempBookingResponse result = bookingService.createTempPendingBooking(request);
+        return ApiResponse.builder().result(result).build();
+    }
+
     @GetMapping
     public ApiResponse list() {
         return ApiResponse.builder().result(bookingService.findAll()).build();
@@ -45,6 +54,8 @@ public class BookingController {
                 .result(bookingService.get(id))
                 .build();
     }
+
+
 
     @PostMapping
     public ResponseEntity<ApiResponse> create(@RequestBody BookingRequest request) {

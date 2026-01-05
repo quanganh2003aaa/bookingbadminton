@@ -24,7 +24,7 @@ public class RegisterOwnerController {
 
     private final RegisterOwnerService registerOwnerService;
 
-    //API xác nhận tạo đơn đăng ký  thành công
+    //API xác nhận tạo đơn đăng ký thành công
     @PostMapping("/confirm")
     public ApiResponse confirm(@RequestBody @Valid RegisterOwnerConfirmRequest request) {
         return ApiResponse.builder().result(registerOwnerService.confirm(request)).build();

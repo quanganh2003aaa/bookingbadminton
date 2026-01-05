@@ -2,6 +2,7 @@ package com.example.bookingbadminton.model.entity;
 
 import com.example.bookingbadminton.model.BaseModel;
 import com.example.bookingbadminton.model.Enum.ActiveStatus;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,6 +14,7 @@ import java.time.LocalTime;
 import java.util.List;
 
 @Entity
+@JsonIgnoreProperties({"parentField", "subFields", "bookingField", "owner", "hibernateLazyInitializer", "handler"})
 @Table(name = "field")
 @Data
 @NoArgsConstructor

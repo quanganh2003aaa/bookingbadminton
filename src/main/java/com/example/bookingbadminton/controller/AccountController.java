@@ -24,34 +24,6 @@ public class AccountController {
     private final UserService userService;
     private final OwnerService ownerService;
 
-//    @GetMapping
-//    public ApiResponse list() {
-//        return ApiResponse.builder().result(accountService.findAll()).build();
-//    }
-//
-//    @GetMapping("/{id}")
-//    public ApiResponse get(@PathVariable UUID id) {
-//        return ApiResponse.builder().result(accountService.get(id)).build();
-//    }
-//
-//    @PostMapping
-//    public ResponseEntity<ApiResponse> create(@RequestBody @Valid CreateAccountRequest request) {
-//        Account saved = accountService.create(request);
-//        return ResponseEntity.status(HttpStatus.CREATED)
-//                .body(ApiResponse.builder().result(saved).build());
-//    }
-//
-//    @PutMapping("/{id}")
-//    public ApiResponse update(@PathVariable UUID id, @RequestBody Account request) {
-//        return ApiResponse.builder().result(accountService.update(id, request)).build();
-//    }
-//
-//    @DeleteMapping("/{id}")
-//    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-//        accountService.delete(id);
-//        return ResponseEntity.noContent().build();
-//    }
-
     //API đăng nhập user
     @PostMapping("/login")
     public ApiResponse login(@RequestBody @Valid LoginRequest request) {
@@ -83,7 +55,7 @@ public class AccountController {
     }
 
     //API đăng ký tài khoản người dùng
-    @PostMapping("/register/user")
+    @PostMapping("/register-user")
     public ResponseEntity<ApiResponse> registerUser(@RequestBody @Valid RegisterUserRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.builder().result( userService.create(request)).build());

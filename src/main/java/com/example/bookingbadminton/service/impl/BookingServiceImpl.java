@@ -5,16 +5,19 @@ import com.example.bookingbadminton.model.entity.Booking;
 import com.example.bookingbadminton.model.entity.BookingField;
 import com.example.bookingbadminton.model.entity.Field;
 import com.example.bookingbadminton.model.entity.User;
-import com.example.bookingbadminton.payload.BookingByDayResponse;
 import com.example.bookingbadminton.payload.FieldOwnerDailyBookingResponse;
+import com.example.bookingbadminton.payload.TempBookingRequest;
+import com.example.bookingbadminton.payload.TempBookingResponse;
 import com.example.bookingbadminton.repository.BookingFieldRepository;
 import com.example.bookingbadminton.repository.BookingRepository;
 import com.example.bookingbadminton.repository.FieldRepository;
+import com.example.bookingbadminton.repository.TimeSlotRepository;
 import com.example.bookingbadminton.repository.UserRepository;
 import com.example.bookingbadminton.service.BookingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
@@ -25,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +38,7 @@ public class BookingServiceImpl implements BookingService {
     private final FieldRepository fieldRepository;
     private final UserRepository userRepository;
     private final BookingFieldRepository bookingFieldRepository;
+    private final TimeSlotRepository timeSlotRepository;
 
     @Override
     public List<Booking> findAll() {
@@ -63,6 +68,7 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Field not found"));
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        booking.setField(field);
         booking.setUser(user);
         booking.setMsisdn(msisdn);
         booking.setStatus(status);
@@ -85,6 +91,7 @@ public class BookingServiceImpl implements BookingService {
             link.setField(field);
             link.setStartHour(startHour);
             link.setEndHour(endHour);
+            link.setIndexField(field.getIndexField());
             List<BookingField> newLinks = new ArrayList<>();
             newLinks.add(link);
             booking.setBookingField(newLinks);
@@ -95,6 +102,7 @@ public class BookingServiceImpl implements BookingService {
         link.setField(field);
         link.setStartHour(startHour);
         link.setEndHour(endHour);
+        link.setIndexField(field.getIndexField());
     }
 
     @Override
@@ -110,6 +118,9 @@ public class BookingServiceImpl implements BookingService {
 
         Map<UUID, List<FieldOwnerDailyBookingResponse.BookingSlot>> slotsByField = new HashMap<>();
         for (var bf : bookingFields) {
+            if (bf.getField() != null && bf.getField().getDeletedAt() != null) {
+                continue;
+            }
             var slot = new FieldOwnerDailyBookingResponse.BookingSlot(
                     bf.getBooking() != null ? bf.getBooking().getId() : null,
                     bf.getStartHour(),
@@ -125,8 +136,9 @@ public class BookingServiceImpl implements BookingService {
             children = List.of(parent);
         }
         children = children.stream()
+                .filter(f -> f.getDeletedAt() == null)
                 .sorted(Comparator.comparing(f -> f.getIndexField() == null ? Integer.MAX_VALUE : f.getIndexField()))
-                .toList();
+                .collect(Collectors.toList());
 
         var subFields = children.stream()
                 .map(f -> new FieldOwnerDailyBookingResponse.SubFieldBooking(
@@ -144,39 +156,130 @@ public class BookingServiceImpl implements BookingService {
         );
     }
 
-//    @Override
-//    public List<BookingByDayResponse> findByDay(java.time.LocalDate date) {
-//        LocalDateTime startOfDay = date.atStartOfDay();
-//        LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
-//        return bookingRepository.findByStartHourBetween(startOfDay, endOfDay).stream()
-//                .map(b -> new BookingByDayResponse(
-//                        b.getId(),
-//                        b.getField().getId(),
-//                        b.getUser().getId(),
-//                        b.getMsisdn(),
-//                        b.getIndexField(),
-//                        b.getStartHour(),
-//                        b.getEndHour(),
-//                        b.getStatus()
-//                ))
-//                .toList();
-//    }
-//
-//    @Override
-//    public List<BookingByDayResponse> findByDayAndField(java.time.LocalDate date, UUID fieldId) {
-//        LocalDateTime startOfDay = date.atStartOfDay();
-//        LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
-//        return bookingRepository.findByField_IdAndStartHourBetween(fieldId, startOfDay, endOfDay).stream()
-//                .map(b -> new BookingByDayResponse(
-//                        b.getId(),
-//                        b.getField().getId(),
-//                        b.getUser().getId(),
-//                        b.getMsisdn(),
-//                        b.getIndexField(),
-//                        b.getStartHour(),
-//                        b.getEndHour(),
-//                        b.getStatus()
-//                ))
-//                .toList();
-//    }
+    @Override
+    @Transactional
+    public TempBookingResponse createTempPendingBooking(TempBookingRequest request) {
+        Field parent = fieldRepository.findById(request.parentFieldId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sân cha!"));
+
+        // Lọc sân con còn hiệu lực
+        List<Field> children = parent.getSubFields();
+        if (children == null || children.isEmpty()) {
+            children = List.of(parent);
+        }
+        children = children.stream()
+                .filter(f -> f.getDeletedAt() == null)
+                .collect(Collectors.toList());
+        Map<UUID, Field> childMap = children.stream()
+                .collect(Collectors.toMap(Field::getId, f -> f));
+
+        User user = userRepository.findById(request.userId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng!"));
+
+        // Giá dựa trên slot của sân cha
+        var parentSlots = timeSlotRepository.findByField_IdOrderByStartHour(parent.getId());
+        LocalDateTime now = LocalDateTime.now();
+
+        // Lấy booking trong ngày để kiểm tra trùng và dọn pending quá hạn
+        Map<LocalDate, List<BookingField>> bookingFieldByDate = request.listBookingField().stream()
+                .map(TempBookingRequest.TempBookingItem::date)
+                .distinct()
+                .collect(Collectors.toMap(
+                        d -> d,
+                        d -> bookingFieldRepository.findByParentFieldAndDay(parent.getId(), d.atStartOfDay(), d.plusDays(1).atStartOfDay())
+                ));
+
+        bookingFieldByDate.values().forEach(list -> list.forEach(bf -> {
+            Booking b = bf.getBooking();
+            if (b == null || b.getDeletedAt() != null) {
+                return;
+            }
+            if (BookingStatus.PENDING.equals(b.getStatus()) && b.getCreatedAt() != null
+                    && b.getCreatedAt().isBefore(now.minusMinutes(5))) {
+                b.setDeletedAt(now);
+                bookingRepository.save(b);
+            }
+        }));
+
+        Booking booking = new Booking();
+        booking.setStatus(BookingStatus.PENDING);
+        booking.setField(parent);
+        booking.setUser(user);
+        booking.setMsisdn(user.getAccount() != null ? user.getAccount().getMsisdn() : null);
+
+        List<TempBookingResponse.TempBookingItem> items = new ArrayList<>();
+        int total = 0;
+        List<BookingField> links = new ArrayList<>();
+
+        for (TempBookingRequest.TempBookingItem item : request.listBookingField()) {
+            Field sub = childMap.get(item.subFieldId());
+            if (sub == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sân con không thuộc sân cha hoặc đã bị xóa!");
+            }
+
+            LocalDateTime start = item.date().atTime(item.startHour());
+            LocalDateTime end = item.date().atTime(item.endHour());
+
+            // Kiểm tra trùng lịch với các đơn đã đặt/đang pending còn hiệu lực
+            List<BookingField> existingInDay = bookingFieldByDate.getOrDefault(item.date(), List.of());
+            for (BookingField existed : existingInDay) {
+                Booking existedBooking = existed.getBooking();
+                if (existedBooking == null || existedBooking.getDeletedAt() != null) {
+                    continue;
+                }
+                if (BookingStatus.PENDING.equals(existedBooking.getStatus())
+                        && existedBooking.getCreatedAt() != null
+                        && existedBooking.getCreatedAt().isBefore(now.minusMinutes(5))) {
+                    continue;
+                }
+                if (!(BookingStatus.ACCEPT.equals(existedBooking.getStatus())
+                        || BookingStatus.INACCEPT.equals(existedBooking.getStatus())
+                        || BookingStatus.PENDING.equals(existedBooking.getStatus()))) {
+                    continue;
+                }
+                if (!existed.getField().getId().equals(sub.getId())) {
+                    continue;
+                }
+                if (start.isBefore(existed.getEndHour()) && end.isAfter(existed.getStartHour())) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Khung giờ này đã được đặt. Vui lòng chọn thời gian khác.");
+                }
+            }
+
+            // Tính giá theo slot của sân cha (dựa trên giờ bắt đầu)
+            int price = parentSlots.stream()
+                    .filter(ts -> !ts.getStartHour().isAfter(item.startHour()) && ts.getEndHour().isAfter(item.startHour()))
+                    .map(ts -> ts.getPrice() == null ? 0 : ts.getPrice())
+                    .findFirst()
+                    .orElse(0);
+            total += price;
+
+            BookingField bf = new BookingField();
+            bf.setBooking(booking);
+            bf.setField(sub);
+            bf.setStartHour(start);
+            bf.setEndHour(end);
+            bf.setIndexField(sub.getIndexField());
+            links.add(bf);
+
+            items.add(new TempBookingResponse.TempBookingItem(
+                    sub.getId(),
+                    sub.getIndexField(),
+                    item.date(),
+                    item.startHour(),
+                    item.endHour(),
+                    price
+            ));
+        }
+
+        booking.setBookingField(links);
+        bookingRepository.save(booking);
+
+        return new TempBookingResponse(
+                parent.getId(),
+                booking.getUser() != null ? booking.getUser().getId() : null,
+                BookingStatus.PENDING,
+                total,
+                items
+        );
+    }
 }
