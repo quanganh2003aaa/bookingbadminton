@@ -5,7 +5,7 @@ import com.example.bookingbadminton.payload.ApiResponse;
 import com.example.bookingbadminton.payload.PageResponse;
 import com.example.bookingbadminton.payload.UserRequest;
 import com.example.bookingbadminton.payload.UserAdminResponse;
-import com.example.bookingbadminton.service.AccountService;
+import com.example.bookingbadminton.service.AuthenticationService;
 import com.example.bookingbadminton.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService userService;
-    private final AccountService accountService;
+    private final AuthenticationService authenticationService;
 
     @GetMapping
     public ApiResponse list() {

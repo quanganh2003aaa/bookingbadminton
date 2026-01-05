@@ -11,14 +11,11 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
+@Builder
 @Entity
 @Table(name = "passcode")
 @Data
@@ -42,7 +39,9 @@ public class Passcode extends BaseModel {
 
     private LocalDateTime time;
     @Column(name = "total_day")
-    private Integer totalDay;
+    @Builder.Default
+    private Integer totalDay = 0;
     @Column(name = "total_month")
-    private Integer totalMonth;
+    @Builder.Default
+    private Integer totalMonth = 0;
 }

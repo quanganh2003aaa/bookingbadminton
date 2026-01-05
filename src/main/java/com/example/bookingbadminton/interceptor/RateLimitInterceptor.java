@@ -1,6 +1,6 @@
 package com.example.bookingbadminton.interceptor;
 
-import com.example.haus.service.RateLimitService;
+import com.example.bookingbadminton.service.RateLimitService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

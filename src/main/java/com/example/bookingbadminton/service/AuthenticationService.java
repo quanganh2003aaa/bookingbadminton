@@ -1,26 +1,49 @@
 package com.example.bookingbadminton.service;
 
-import com.example.haus.domain.dto.request.auth.*;
-import com.example.haus.domain.dto.request.auth.otp.VerifyOtpRequestDto;
-import com.example.haus.domain.dto.response.auth.LoginResponseDto;
-import com.example.haus.domain.dto.response.auth.RefreshTokenResponseDto;
-import com.example.haus.domain.dto.response.user.UserResponseDto;
+import com.example.bookingbadminton.model.dto.AccountDTO;
+import com.example.bookingbadminton.model.dto.request.auth.*;
+import com.example.bookingbadminton.model.dto.request.user.UserResponseDto;
+import com.example.bookingbadminton.model.dto.response.auth.AccountResponseDto;
+import com.example.bookingbadminton.model.dto.response.auth.LoginResponseDto;
+import com.example.bookingbadminton.model.dto.response.auth.RefreshTokenResponseDto;
+import com.example.bookingbadminton.model.entity.Account;
+import com.example.bookingbadminton.payload.CreateAccountRequest;
+import com.example.bookingbadminton.payload.RegisterOwnerRequest;
+import com.example.bookingbadminton.payload.RegisterOwnerResponse;
+import com.example.bookingbadminton.payload.request.LoginRequest;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+import java.util.UUID;
 
 public interface AuthenticationService {
+    List<Account> findAll();
+
+    Account get(UUID id);
+
+    Account create(CreateAccountRequest request);
+
+    Account update(UUID id, Account account);
+
+    void delete(UUID id);
+
     LoginResponseDto authentication(LoginRequestDto request);
 
-    void logout(LogoutRequestDto request);
+    String lock(UUID id);
 
-    RefreshTokenResponseDto refresh(RefreshTokenRequestDto request);
+    String unlock(UUID id);
 
-    void register(RegisterRequestDto request);
+    void registerOwner(RegisterOwnerRequest request, MultipartFile file);
 
-    UserResponseDto verifyOtpToRegister(VerifyOtpRequestDto request);
+    RegisterOwnerResponse verifyOtpToRegister(VerifyOtpRequestDto request);
+
+    void logout (LogoutRequestDto logoutRequestDto);
 
     void forgotPassword(ForgotPasswordRequestDto request);
 
     boolean verifyOtpToResetPassword(VerifyOtpRequestDto request);
 
-    UserResponseDto resetPassword(ResetPasswordRequestDto request);
+    AccountResponseDto resetPassword(ResetPasswordRequestDto request);
 
+    RefreshTokenResponseDto refresh(RefreshTokenRequestDto request);
 }

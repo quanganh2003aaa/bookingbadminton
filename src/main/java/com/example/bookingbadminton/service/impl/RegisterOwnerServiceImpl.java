@@ -20,6 +20,7 @@ import com.example.bookingbadminton.repository.FieldRepository;
 import com.example.bookingbadminton.repository.OwnerRepository;
 import com.example.bookingbadminton.repository.PasscodeRepository;
 import com.example.bookingbadminton.repository.RegisterOwnerRepository;
+import com.example.bookingbadminton.service.EmailService;
 import com.example.bookingbadminton.service.FieldImageService;
 import com.example.bookingbadminton.model.Enum.TypeImage;
 import com.example.bookingbadminton.service.RegisterOwnerService;
@@ -48,8 +49,11 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
     private final OwnerRepository ownerRepository;
     private final FieldRepository fieldRepository;
     private final FieldImageService fieldImageService;
+    private final EmailService emailService;
     @Value("${file.upload-dir:uploads}")
     private String uploadBaseDir;
+
+    private Map<String, PendingRegistration>
 
     @Override
     public List<RegisterOwner> findAll() {
@@ -64,6 +68,8 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
 
     @Override
     public RegisterOwner create(RegisterOwnerRequest request) {
+        emailService
+
         return saveRegisterOwner(new RegisterOwner(), request);
     }
 

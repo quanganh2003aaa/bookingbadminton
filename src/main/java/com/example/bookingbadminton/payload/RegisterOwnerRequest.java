@@ -8,13 +8,14 @@ import jakarta.validation.constraints.Size;
 import java.util.UUID;
 
 public record RegisterOwnerRequest(
-        @NotNull UUID accountId,
         @NotBlank @Size(max = 255) String name,
         @NotBlank String address,
         @NotBlank @Size(max = 10) String mobileContact,
         @NotBlank @Size(max = 50) String gmail,
+        @NotBlank @Size(max = 300) String password,
+        @NotBlank @Size(min = 6) @Size(min = 6) String msiSdn,
         @NotNull RegisterStatus active,
-        String linkMap,
-        String imgQr
+        @NotNull String nameOwner,
+        String linkMap
 ) {
 }

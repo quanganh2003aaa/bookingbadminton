@@ -1,6 +1,6 @@
 package com.example.bookingbadminton.service;
 
-import com.example.haus.constant.MediaType;
+import com.example.bookingbadminton.constant.MediaType;
 import org.springframework.web.multipart.MultipartFile;
 
 

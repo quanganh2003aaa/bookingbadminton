@@ -1,10 +1,10 @@
 package com.example.bookingbadminton.service.impl;
 
-import com.example.haus.config.properties.FileUploadProperties;
-import com.example.haus.domain.dto.VirusScanResult;
-import com.example.haus.exception.FileValidationException;
-import com.example.haus.exception.FileValidationException.FileValidationErrorCode;
-import com.example.haus.service.VirusScanService;
+import com.example.bookingbadminton.config.properties.FileUploadProperties;
+import com.example.bookingbadminton.model.dto.VirusScanResult;
+import com.example.bookingbadminton.exception.FileValidationException;
+import com.example.bookingbadminton.exception.FileValidationException.FileValidationErrorCode;
+import com.example.bookingbadminton.service.VirusScanService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

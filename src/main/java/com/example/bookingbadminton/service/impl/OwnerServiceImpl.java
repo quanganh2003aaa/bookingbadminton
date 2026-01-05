@@ -7,6 +7,7 @@ import com.example.bookingbadminton.payload.request.RegisterOwnerRequest;
 import com.example.bookingbadminton.repository.AccountRepository;
 import com.example.bookingbadminton.repository.OwnerRepository;
 import com.example.bookingbadminton.service.AccountService;
+import com.example.bookingbadminton.service.AuthenticationService;
 import com.example.bookingbadminton.service.OwnerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,7 +26,7 @@ public class OwnerServiceImpl implements OwnerService {
 
     private final OwnerRepository ownerRepository;
     private final AccountRepository accountRepository;
-    private final AccountService accountService;
+    private final AuthenticationService authenticationService;
 
     @Override
     public List<Owner> findAll() {
@@ -40,7 +41,7 @@ public class OwnerServiceImpl implements OwnerService {
 
     @Override
     public Owner create(RegisterOwnerRequest request) {
-        Account saved = accountService.create(request.account());
+        Account saved = authenticationService.create(request.account());
         var ownerPayload = new OwnerRequest(saved.getId(), request.name(), AVATAR_DEFAULT);
         return saveOwner(new Owner(), ownerPayload);
     }

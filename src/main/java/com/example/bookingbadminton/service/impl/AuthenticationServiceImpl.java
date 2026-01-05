@@ -3,35 +3,33 @@ package com.example.bookingbadminton.service.impl;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.example.haus.config.keycloak.KeycloakProperties;
-import com.example.haus.constant.CommonConstant;
-import com.example.haus.constant.ErrorMessage;
-import com.example.haus.domain.dto.request.auth.*;
-import com.example.haus.domain.dto.request.auth.otp.PendingRegistrationRequestDto;
-import com.example.haus.domain.dto.request.auth.otp.PendingResetPasswordRequestDto;
-import com.example.haus.domain.dto.request.auth.otp.VerifyOtpRequestDto;
-import com.example.haus.domain.dto.response.auth.LoginResponseDto;
-import com.example.haus.domain.dto.response.auth.RefreshTokenResponseDto;
-import com.example.haus.domain.dto.response.user.UserResponseDto;
-import com.example.haus.domain.entity.product.Cart;
-import com.example.haus.domain.entity.user.Role;
-import com.example.haus.domain.entity.user.User;
-import com.example.haus.domain.mapper.AuthMapper;
-import com.example.haus.exception.InvalidDataException;
-import com.example.haus.exception.KeycloakException;
-import com.example.haus.exception.ResourceNotFoundException;
-import com.example.haus.repository.CartRepository;
-import com.example.haus.repository.InvalidatedTokenRepository;
-import com.example.haus.repository.UserRepository;
-import com.example.haus.service.AuthenticationService;
-import com.example.haus.service.EmailService;
-import com.example.haus.service.JwtService;
-import com.example.haus.util.OtpUtil;
-import com.example.haus.util.keycloak.KeycloakUtil;
+import com.example.bookingbadminton.config.keycloak.KeycloakProperties;
+import com.example.bookingbadminton.constant.CommonConstant;
+import com.example.bookingbadminton.constant.ErrorMessage;
+import com.example.bookingbadminton.exception.InvalidDataException;
+import com.example.bookingbadminton.exception.KeycloakException;
+import com.example.bookingbadminton.exception.ResourceNotFoundException;
+import com.example.bookingbadminton.mapper.AuthMapper;
+import com.example.bookingbadminton.model.Enum.ActiveStatus;
+import com.example.bookingbadminton.model.Enum.RegisterStatus;
+import com.example.bookingbadminton.model.Enum.TypePasscode;
+import com.example.bookingbadminton.model.dto.request.auth.*;
+import com.example.bookingbadminton.model.dto.request.user.UserResponseDto;
+import com.example.bookingbadminton.model.dto.response.auth.AccountResponseDto;
+import com.example.bookingbadminton.model.dto.response.auth.LoginResponseDto;
+import com.example.bookingbadminton.model.dto.response.auth.RefreshTokenResponseDto;
+import com.example.bookingbadminton.model.entity.*;
+import com.example.bookingbadminton.payload.CreateAccountRequest;
+import com.example.bookingbadminton.payload.RegisterOwnerRequest;
+import com.example.bookingbadminton.payload.RegisterOwnerResponse;
+import com.example.bookingbadminton.repository.*;
+import com.example.bookingbadminton.service.AuthenticationService;
+import com.example.bookingbadminton.service.EmailService;
+import com.example.bookingbadminton.util.KeycloakUtil;
+import com.example.bookingbadminton.util.OtpUtil;
+import com.example.bookingbadminton.util.UploadFileUtil;
 import jakarta.transaction.Transactional;
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -40,60 +38,92 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.example.haus.constant.CommonConstant.*;
+import static com.example.bookingbadminton.constant.CommonConstant.*;
 
 @Service
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 @Slf4j(topic = "AUTHENTICATION-SERVICE")
 public class AuthenticationServiceImpl implements AuthenticationService {
 
-    KeycloakUtil keycloakUtil;
+    private final AccountRepository accountRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+    private final KeycloakProperties keycloakProperties;
+    private final RestTemplate restTemplate;
+    private final KeycloakUtil keycloakUtil;
+    private final EmailService emailService;
+    private final PasscodeRepository passcodeRepository;
+    private final UploadFileUtil uploadFileUtil;
+    private final AuthMapper authMapper;
+    private final RegisterOwnerRepository registerOwnerRepository;
+    private ConcurrentHashMap<String, PendingRegistrationRequestDto> pendingRegistrationRequestMap = new ConcurrentHashMap<>();
+    private Map<String, PendingResetPasswordRequestDto> pendingResetPasswordMap = new ConcurrentHashMap<>();
 
-    KeycloakProperties keycloakProperties;
+    @Override
+    public List<Account> findAll() {
+        return accountRepository.findAll();
+    }
 
-    JwtService jwtService;
+    @Override
+    public Account get(UUID id) {
+        return accountRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
+    }
 
-    AuthMapper authMapper;
+    @Override
+    public Account create(CreateAccountRequest request) {
+        if (accountRepository.existsByGmailIgnoreCase(request.gmail())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Gmail already exists");
+        }
+        Account account = new Account();
+        account.setPassword(passwordEncoder.encode(request.password()));
+        account.setGmail(request.gmail());
+        account.setMsisdn(request.msisdn());
+        return accountRepository.save(account);
+    }
 
-    EmailService emailService;
+    @Override
+    public Account update(UUID id, Account account) {
+        Account existing = get(id);
+        existing.setPassword(passwordEncoder.encode(account.getPassword()));
+        existing.setGmail(account.getGmail());
+        existing.setMsisdn(account.getMsisdn());
+        return accountRepository.save(existing);
+    }
 
-    InvalidatedTokenRepository invalidatedTokenRepository;
-
-    UserRepository userRepository;
-
-    CartRepository cartRepository;
-
-    RestTemplate restTemplate;
-
-    Map<String, PendingRegistrationRequestDto> pendingRegisterMap = new ConcurrentHashMap<>();
-
-    Map<String, PendingResetPasswordRequestDto> pendingResetPasswordMap = new ConcurrentHashMap<>();
+    @Override
+    public void delete(UUID id) {
+        Account account = get(id);
+        account.setDeletedAt(LocalDateTime.now());
+        accountRepository.save(account);
+    }
 
     @Override
     @Transactional
     public LoginResponseDto authentication(LoginRequestDto request) {
-
         final String url = keycloakProperties.serverUrl() + "realms/" + keycloakProperties.realm() + "/protocol/openid-connect/token";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
-        params.add("grant_type", PASSWORD);
-        params.add(CLIENT_ID, keycloakProperties.clientId());
-        params.add(CLIENT_SECRET, keycloakProperties.clientSecret());
+        params.add("grant_type", "password");
+        params.add("client_id", keycloakProperties.clientId());
+        params.add("client_secret", keycloakProperties.clientSecret());
         params.add("scope", "openid");
         params.add("username", request.getUsername());
-        params.add(PASSWORD, request.getPassword());
+        params.add("password", request.getPassword());
 
         HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(params, headers);
         try {
@@ -128,7 +158,167 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public void logout(LogoutRequestDto request) {
+    public String lock(UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng!"));
+        Account account = user.getAccount();
+        if (account.getDeletedAt() == null) {
+            account.setUpdatedAt(LocalDateTime.now());
+            account.setDeletedAt(LocalDateTime.now());
+            accountRepository.save(account);
+        }
+        return "Khóa tài khoản thành công";
+    }
+
+    @Override
+    public String unlock(UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng!"));
+        Account account = user.getAccount();
+        if (account.getDeletedAt() != null) {
+            account.setUpdatedAt(LocalDateTime.now());
+            account.setDeletedAt(null);
+            accountRepository.save(account);
+        }
+        return "Mở khóa tài khoản thành công";
+    }
+
+    private Account checkAccountLogin(String gmail, String password){
+        Account account = accountRepository.findByGmailIgnoreCase(gmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Thông tin đăng nhập không chính xác!"));
+        if (account.getDeletedAt() != null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Thông tin đăng nhập không chính xác!");
+        }
+        if (!passwordEncoder.matches(password, account.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Thông tin đăng nhập không chính xác!");
+        }
+        return account;
+    }
+
+    @Override
+    @Transactional
+    public void registerOwner(RegisterOwnerRequest request, MultipartFile file) {
+
+        final String url = keycloakProperties.serverUrl() + "admin/realms/" + keycloakProperties.realm() + "/users";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.AUTHORIZATION, CommonConstant.BEARER_TOKEN + " " + keycloakUtil.getAdminToken());
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        Map<String, Object> user = new HashMap<>();
+        user.put("username", request.gmail());
+        user.put("enabled", true);
+        user.put("email", request.gmail());
+        user.put("emailVerified", false);
+        user.put("firstName", request.nameOwner());
+        user.put("lastName", request.nameOwner());
+        user.put("credentials", List.of(Map.of(
+                "type", "password",
+                "value", request.password(),
+                "temporary", false
+        )));
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(user, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+
+            if (response.getStatusCode().isError()) {
+                String errorBody = response.getBody();
+
+                if (response.getStatusCode() == HttpStatus.CONFLICT && errorBody != null && !errorBody.isEmpty()) {
+                    throw new KeycloakException(errorBody);
+                }
+                throw new KeycloakException(ErrorMessage.Auth.ERR_CAN_NOT_CREATE_USER);
+            }
+
+            String userId = keycloakUtil.getUserId(request.gmail());
+
+            String roleId;
+
+            roleId = keycloakUtil.getRoleId("OWNER");
+            keycloakUtil.assignRoleToUser(userId, roleId);
+
+
+        } catch (Exception ex) {
+            throw new KeycloakException(ex.getMessage());
+        }
+
+        String otp = OtpUtil.generateOtp();
+
+        if (accountRepository.existsByGmailIgnoreCase(request.gmail())) {
+            throw new InvalidDataException("Email đã  tồn tại. Vui lòng tạo bằng email khác");
+        }
+
+        Account account  = new Account();
+        account.setGmail(request.gmail());
+        account.setPassword(passwordEncoder.encode(request.password()));
+        account.setMsisdn(request.mobileContact());
+
+        accountRepository.save(account);
+
+        Passcode passcode = new Passcode();
+        passcode.setAccount(account);
+        passcode.setCode(otp);
+        passcode.setTime(LocalDateTime.now().plusMinutes(5));
+        passcode.setActive(ActiveStatus.ACTIVE);
+        passcode.setTotalDay(passcode.getTotalDay() + 1);
+        passcode.setTotalMonth(passcode.getTotalMonth() + 1);
+        passcode.setType(TypePasscode.REGISTER_OWNER_CODE);
+        passcodeRepository.save(passcode);
+
+        PendingRegistrationRequestDto pending = new PendingRegistrationRequestDto();
+
+        pending.setRequest(request);
+        pending.setPasscode(passcode);
+        pending.setFile(file);
+
+        pendingRegistrationRequestMap.put(request.gmail(), pending);
+
+        emailService.sendRegistrationOtpByEmail(request.gmail(), request.nameOwner(), otp);
+    }
+
+    @Override
+    public RegisterOwnerResponse verifyOtpToRegister(VerifyOtpRequestDto request) {
+        PendingRegistrationRequestDto pending = pendingRegistrationRequestMap.get(request.getEmail());
+
+        if (pending == null){
+            throw new InvalidDataException(ErrorMessage.Auth.ERR_PENDING_REGISTER_REQUEST_NULL);
+        }
+
+        if (pending.isExpired())
+            throw new InvalidDataException(ErrorMessage.Auth.ERR_OTP_EXPIRED);
+
+        if (!pending.getPasscode().getCode().equals(request.getOtp()))
+            throw new InvalidDataException(ErrorMessage.Auth.ERR_OTP_NOT_MATCH);
+
+        if (!keycloakUtil.verifyEmail(keycloakUtil.getUserId(request.getEmail()), true)) {
+            throw new KeycloakException(ErrorMessage.Auth.ERR_VERIFY_FAILED_IN_KEYCLOAK);
+        }
+
+        String imageQrSecure = uploadFileUtil.uploadFile(pending.getFile());
+
+        RegisterOwnerRequest req = pending.getRequest();
+
+        RegisterOwner registerOwner = new RegisterOwner();
+        registerOwner.setGmail(req.gmail());
+        registerOwner.setActive(RegisterStatus.PENDING);
+        registerOwner.setAccount(pending.getPasscode().getAccount());
+        registerOwner.setAddress(req.address());
+        registerOwner.setName(req.nameOwner());
+        registerOwner.setImgQr(imageQrSecure);
+        registerOwner.setLinkMap(req.linkMap());
+        registerOwner.setMobileContact(req.mobileContact());
+
+        registerOwnerRepository.save(registerOwner);
+
+        pendingRegistrationRequestMap.remove(request.getEmail());
+
+        return authMapper.mapToResponse(registerOwner);
+    }
+
+    @Override
+    public void logout(LogoutRequestDto logoutRequestDto) {
         String url = keycloakProperties.serverUrl()
                 + "/realms/" + keycloakProperties.realm()
                 + "/protocol/openid-connect/logout";
@@ -139,7 +329,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add(CLIENT_ID, keycloakProperties.clientId());
         body.add(CLIENT_SECRET, keycloakProperties.clientSecret());
-        body.add(REFRESH_TOKEN, request.getRefreshToken());
+        body.add(REFRESH_TOKEN, logoutRequestDto.getRefreshToken());
 
         HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<>(body, headers);
 
@@ -159,8 +349,79 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public RefreshTokenResponseDto refresh(RefreshTokenRequestDto request) {
+    public void forgotPassword(ForgotPasswordRequestDto request) {
+        Account account = accountRepository.findByGmailIgnoreCase(request.getEmail()).orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.User.ERR_EMAIL_NOT_EXISTED));
+        Passcode passcode = passcodeRepository.findByAccount_Id(account.getId()).orElseThrow(
+                () -> new ResourceNotFoundException("Không tìm thấy passcode từ account")
+        );
 
+        String otp = OtpUtil.generateOtp();
+        passcode.setCode(otp);
+
+        PendingResetPasswordRequestDto pending = new PendingResetPasswordRequestDto();
+
+        pending.setRequest(request);
+        pending.setPasscode(passcode);
+
+        pendingResetPasswordMap.put(request.getEmail(), pending);
+
+        emailService.sendForgotPasswordOtpByEmail(request.getEmail(), request.getEmail(), otp);
+    }
+
+    @Override
+    public boolean verifyOtpToResetPassword(VerifyOtpRequestDto request) {
+        PendingResetPasswordRequestDto pending = pendingResetPasswordMap.get(request.getEmail());
+
+        if (pending == null)
+            throw new InvalidDataException(ErrorMessage.Auth.ERR_PENDING_RESET_REQUEST_NULL);
+
+        if (pending.isExpired())
+            throw new InvalidDataException(ErrorMessage.Auth.ERR_OTP_EXPIRED);
+
+        if (!pending.getPasscode().getCode().equals(request.getOtp()))
+            throw new InvalidDataException(ErrorMessage.Auth.ERR_OTP_NOT_MATCH);
+
+        return pendingResetPasswordMap.containsKey(request.getEmail())
+                && pendingResetPasswordMap.get(request.getEmail()).getPasscode().getCode().equals(request.getOtp());
+    }
+
+    @Override
+    public AccountResponseDto resetPassword(ResetPasswordRequestDto request) {
+        PendingResetPasswordRequestDto pending = pendingResetPasswordMap.get(request.getEmail());
+        if (pending == null)
+            throw new InvalidDataException(ErrorMessage.Auth.ERR_PENDING_RESET_REQUEST_NULL);
+
+        if (pending.isExpired())
+            throw new InvalidDataException(ErrorMessage.Auth.ERR_OTP_EXPIRED);
+
+        Account account = accountRepository.findByGmailIgnoreCase(request.getEmail())
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.User.ERR_USER_NOT_EXISTED));
+
+        PasswordEncoder encoder = new BCryptPasswordEncoder(10);
+
+        if (encoder.matches(request.getNewPassword(), account.getPassword()))
+            throw new InvalidDataException(ErrorMessage.User.ERR_DUPLICATE_OLD_PASSWORD);
+
+        String userId = keycloakUtil.getUserId(request.getEmail());
+
+        boolean kcReset = keycloakUtil.resetPassword(userId, request.getNewPassword());
+        if (!kcReset)
+            throw new KeycloakException(ErrorMessage.Auth.ERR_CAN_NOT_SEND_RESET_PASSWORD_EMAIL);
+
+        account.setPassword(encoder.encode(request.getNewPassword()));
+        accountRepository.save(account);
+
+        pendingResetPasswordMap.remove(request.getEmail());
+
+        return AccountResponseDto.builder()
+                .gmail(account.getGmail())
+                .msisdn(account.getMsisdn())
+                .password(account.getPassword())
+                .build();
+    }
+
+    @Override
+    public RefreshTokenResponseDto refresh(RefreshTokenRequestDto request) {
         final String url = keycloakProperties.serverUrl() + "/realms/" + keycloakProperties.realm() + "/protocol/openid-connect/token";
 
         HttpHeaders headers = new HttpHeaders();
@@ -192,174 +453,4 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
         throw new InvalidDataException(ErrorMessage.Auth.ERR_USERNAME_PASSWORD_INCORRECT);
     }
-
-    @Override
-    public void register(RegisterRequestDto request) {
-
-        final String url = keycloakProperties.serverUrl() + "admin/realms/" + keycloakProperties.realm() + "/users";
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.set(HttpHeaders.AUTHORIZATION, CommonConstant.BEARER_TOKEN + " " + keycloakUtil.getAdminToken());
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        Map<String, Object> user = new HashMap<>();
-        user.put("username", request.getUsername());
-        user.put("enabled", true);
-        user.put("email", request.getEmail());
-        user.put("emailVerified", false);
-        user.put("firstName", request.getFirstName());
-        user.put("lastName", request.getLastName());
-        user.put("credentials", List.of(Map.of(
-                "type", "password",
-                "value", request.getPassword(),
-                "temporary", false
-        )));
-
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(user, headers);
-
-        try {
-            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
-
-            if (response.getStatusCode().isError()) {
-                String errorBody = response.getBody();
-
-                if (response.getStatusCode() == HttpStatus.CONFLICT && errorBody != null && !errorBody.isEmpty()) {
-                    throw new KeycloakException(errorBody);
-                }
-                throw new KeycloakException(ErrorMessage.Auth.ERR_CAN_NOT_CREATE_USER);
-            }
-
-            String userId = keycloakUtil.getUserId(request.getUsername());
-
-            String roleId;
-
-            roleId = keycloakUtil.getRoleId("USER");
-            keycloakUtil.assignRoleToUser(userId, roleId);
-
-
-        } catch (Exception ex) {
-            throw new KeycloakException(ex.getMessage());
-        }
-
-        String otp = OtpUtil.generateOtp();
-
-        PendingRegistrationRequestDto pending = new PendingRegistrationRequestDto();
-
-        pending.setRequest(request);
-        pending.setOtp(otp);
-        pending.setExpireAt(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")).plusMinutes(5));
-
-        pendingRegisterMap.put(request.getEmail(), pending);
-
-        emailService.sendRegistrationOtpByEmail(request.getEmail(), request.getUsername(), otp);
-    }
-
-    @Override
-    public UserResponseDto verifyOtpToRegister(VerifyOtpRequestDto request) {
-        PendingRegistrationRequestDto pending = pendingRegisterMap.get(request.getEmail());
-
-        if (pending == null){
-            throw new InvalidDataException(ErrorMessage.Auth.ERR_PENDING_REGISTER_REQUEST_NULL);
-        }
-
-        if (pending.isExpired())
-            throw new InvalidDataException(ErrorMessage.Auth.ERR_OTP_EXPIRED);
-
-        if (!pending.getOtp().equals(request.getOtp()))
-            throw new InvalidDataException(ErrorMessage.Auth.ERR_OTP_NOT_MATCH);
-
-        if (!keycloakUtil.verifyEmail(keycloakUtil.getUserId(request.getEmail()), true)) {
-            throw new KeycloakException(ErrorMessage.Auth.ERR_VERIFY_FAILED_IN_KEYCLOAK);
-        }
-
-        RegisterRequestDto req = pending.getRequest();
-
-        User user = authMapper.registerRequestDtoToUser(req);
-
-        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
-
-        user.setPassword(passwordEncoder.encode(req.getPassword()));
-        user.setRole(Role.USER);
-
-        Cart cart = new Cart();
-        cart.setUser(user);
-        user.setCart(cart);
-
-        userRepository.save(user);
-        cartRepository.save(cart);
-
-        pendingRegisterMap.remove(request.getEmail());
-
-        return authMapper.userToUserResponseDto(user);
-    }
-
-    @Override
-    public void forgotPassword(ForgotPasswordRequestDto request) {
-        log.info(request.getEmail());
-
-        if (!userRepository.existsUserByEmailAndIsDeletedFalse(request.getEmail()))
-            throw new ResourceNotFoundException(ErrorMessage.User.ERR_EMAIL_NOT_EXISTED);
-
-        String otp = OtpUtil.generateOtp();
-
-        PendingResetPasswordRequestDto pending = new PendingResetPasswordRequestDto();
-
-        pending.setRequest(request);
-        pending.setOtp(otp);
-        pending.setExpireAt(LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh")).plusMinutes(5));
-
-        pendingResetPasswordMap.put(request.getEmail(), pending);
-
-        emailService.sendForgotPasswordOtpByEmail(request.getEmail(), request.getEmail(), otp);
-    }
-
-    @Override
-    public boolean verifyOtpToResetPassword(VerifyOtpRequestDto request) {
-        PendingResetPasswordRequestDto pending = pendingResetPasswordMap.get(request.getEmail());
-
-        if (pending == null)
-            throw new InvalidDataException(ErrorMessage.Auth.ERR_PENDING_RESET_REQUEST_NULL);
-
-        if (pending.isExpired())
-            throw new InvalidDataException(ErrorMessage.Auth.ERR_OTP_EXPIRED);
-
-        if (!pending.getOtp().equals(request.getOtp()))
-            throw new InvalidDataException(ErrorMessage.Auth.ERR_OTP_NOT_MATCH);
-
-        return pendingResetPasswordMap.containsKey(request.getEmail())
-                && pendingResetPasswordMap.get(request.getEmail()).getOtp().equals(request.getOtp());
-    }
-
-    @Override
-    public UserResponseDto resetPassword(ResetPasswordRequestDto request) {
-
-        PendingResetPasswordRequestDto pending = pendingResetPasswordMap.get(request.getEmail());
-        if (pending == null)
-            throw new InvalidDataException(ErrorMessage.Auth.ERR_PENDING_RESET_REQUEST_NULL);
-
-        if (pending.isExpired())
-            throw new InvalidDataException(ErrorMessage.Auth.ERR_OTP_EXPIRED);
-
-        User user = userRepository.findByEmailAndIsDeletedFalse(request.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.User.ERR_USER_NOT_EXISTED));
-
-        PasswordEncoder encoder = new BCryptPasswordEncoder(10);
-
-        if (encoder.matches(request.getNewPassword(), user.getPassword()))
-            throw new InvalidDataException(ErrorMessage.User.ERR_DUPLICATE_OLD_PASSWORD);
-
-        String userId = keycloakUtil.getUserId(request.getEmail());
-
-        boolean kcReset = keycloakUtil.resetPassword(userId, request.getNewPassword());
-        if (!kcReset)
-            throw new KeycloakException(ErrorMessage.Auth.ERR_CAN_NOT_SEND_RESET_PASSWORD_EMAIL);
-
-        user.setPassword(encoder.encode(request.getNewPassword()));
-        userRepository.save(user);
-
-        pendingResetPasswordMap.remove(request.getEmail());
-
-        return authMapper.userToUserResponseDto(user);
-    }
-
 }
