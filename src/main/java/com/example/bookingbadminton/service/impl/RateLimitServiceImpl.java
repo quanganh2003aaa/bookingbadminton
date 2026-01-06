@@ -1,12 +1,12 @@
 package com.example.bookingbadminton.service.impl;
 
-import com.example.haus.config.ratelimit.BucketStorage;
-import com.example.haus.config.ratelimit.EndpointConfig;
-import com.example.haus.config.ratelimit.LimitConfig;
-import com.example.haus.config.ratelimit.RateLimitProperties;
-import com.example.haus.exception.RateLimitExceededException;
-import com.example.haus.service.RateLimitService;
-import com.example.haus.util.RateLimitUtil;
+import com.example.bookingbadminton.config.ratelimit.BucketStorage;
+import com.example.bookingbadminton.config.ratelimit.EndpointConfig;
+import com.example.bookingbadminton.config.ratelimit.LimitConfig;
+import com.example.bookingbadminton.config.ratelimit.RateLimitProperties;
+import com.example.bookingbadminton.exception.RateLimitExceededException;
+import com.example.bookingbadminton.service.RateLimitService;
+import com.example.bookingbadminton.util.RateLimitUtil;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
 import jakarta.servlet.http.HttpServletRequest;

@@ -5,6 +5,7 @@ import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.example.bookingbadminton.config.keycloak.KeycloakProperties;
 import com.example.bookingbadminton.constant.CommonConstant;
+import com.example.bookingbadminton.constant.Const;
 import com.example.bookingbadminton.constant.ErrorMessage;
 import com.example.bookingbadminton.exception.InvalidDataException;
 import com.example.bookingbadminton.exception.KeycloakException;
@@ -22,12 +23,13 @@ import com.example.bookingbadminton.model.entity.*;
 import com.example.bookingbadminton.payload.CreateAccountRequest;
 import com.example.bookingbadminton.payload.RegisterOwnerRequest;
 import com.example.bookingbadminton.payload.RegisterOwnerResponse;
+import com.example.bookingbadminton.payload.request.RegisterUserRequest;
 import com.example.bookingbadminton.repository.*;
 import com.example.bookingbadminton.service.AuthenticationService;
 import com.example.bookingbadminton.service.EmailService;
-import com.example.bookingbadminton.util.KeycloakUtil;
 import com.example.bookingbadminton.util.OtpUtil;
 import com.example.bookingbadminton.util.UploadFileUtil;
+import com.example.bookingbadminton.util.keycloak.KeycloakUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,7 +44,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,44 +71,44 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private ConcurrentHashMap<String, PendingRegistrationRequestDto> pendingRegistrationRequestMap = new ConcurrentHashMap<>();
     private Map<String, PendingResetPasswordRequestDto> pendingResetPasswordMap = new ConcurrentHashMap<>();
 
-    @Override
-    public List<Account> findAll() {
-        return accountRepository.findAll();
-    }
-
-    @Override
-    public Account get(UUID id) {
-        return accountRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
-    }
-
-    @Override
-    public Account create(CreateAccountRequest request) {
-        if (accountRepository.existsByGmailIgnoreCase(request.gmail())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Gmail already exists");
-        }
-        Account account = new Account();
-        account.setPassword(passwordEncoder.encode(request.password()));
-        account.setGmail(request.gmail());
-        account.setMsisdn(request.msisdn());
-        return accountRepository.save(account);
-    }
-
-    @Override
-    public Account update(UUID id, Account account) {
-        Account existing = get(id);
-        existing.setPassword(passwordEncoder.encode(account.getPassword()));
-        existing.setGmail(account.getGmail());
-        existing.setMsisdn(account.getMsisdn());
-        return accountRepository.save(existing);
-    }
-
-    @Override
-    public void delete(UUID id) {
-        Account account = get(id);
-        account.setDeletedAt(LocalDateTime.now());
-        accountRepository.save(account);
-    }
+//    @Override
+//    public List<Account> findAll() {
+//        return accountRepository.findAll();
+//    }
+//
+//    @Override
+//    public Account get(UUID id) {
+//        return accountRepository.findById(id)
+//                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
+//    }
+//
+//    @Override
+//    public Account create(CreateAccountRequest request) {
+//        if (accountRepository.existsByGmailIgnoreCase(request.gmail())) {
+//            throw new ResponseStatusException(HttpStatus.CONFLICT, "Gmail already exists");
+//        }
+//        Account account = new Account();
+//        account.setPassword(passwordEncoder.encode(request.password()));
+//        account.setGmail(request.gmail());
+//        account.setMsisdn(request.msisdn());
+//        return accountRepository.save(account);
+//    }
+//
+//    @Override
+//    public Account update(UUID id, Account account) {
+//        Account existing = get(id);
+//        existing.setPassword(passwordEncoder.encode(account.getPassword()));
+//        existing.setGmail(account.getGmail());
+//        existing.setMsisdn(account.getMsisdn());
+//        return accountRepository.save(existing);
+//    }
+//
+//    @Override
+//    public void delete(UUID id) {
+//        Account account = get(id);
+//        account.setDeletedAt(LocalDateTime.now());
+//        accountRepository.save(account);
+//    }
 
     @Override
     @Transactional
@@ -355,8 +356,15 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 () -> new ResourceNotFoundException("Không tìm thấy passcode từ account")
         );
 
+        if (passcode.getTotalDay() >= 5 || passcode.getTotalMonth() >= 15) {
+            throw new InvalidDataException("Passcode quá lượt giới hạn");
+        }
+
         String otp = OtpUtil.generateOtp();
         passcode.setCode(otp);
+        passcode.setTime(LocalDateTime.now().plusMinutes(5));
+        passcode.setTotalDay(passcode.getTotalDay() + 1);
+        passcode.setTotalMonth(passcode.getTotalMonth() + 1);
 
         PendingResetPasswordRequestDto pending = new PendingResetPasswordRequestDto();
 
@@ -452,5 +460,72 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new KeycloakException(ErrorMessage.Auth.ERR_LOGIN_FAILED_IN_KEYCLOAK);
         }
         throw new InvalidDataException(ErrorMessage.Auth.ERR_USERNAME_PASSWORD_INCORRECT);
+    }
+
+    @Override
+    public UserResponseDto registerUser(RegisterUserRequest request) {
+        final String url = keycloakProperties.serverUrl() + "admin/realms/" + keycloakProperties.realm() + "/users";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.AUTHORIZATION, CommonConstant.BEARER_TOKEN + " " + keycloakUtil.getAdminToken());
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        Map<String, Object> userK = new HashMap<>();
+        userK.put("username", request.account().gmail());
+        userK.put("enabled", true);
+        userK.put("email", request.account().gmail());
+        userK.put("emailVerified", true);
+        userK.put("firstName", request.name());
+        userK.put("lastName", request.name());
+        userK.put("credentials", List.of(Map.of(
+                "type", "password",
+                "value", request.account().password(),
+                "temporary", false
+        )));
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(userK, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+
+            if (response.getStatusCode().isError()) {
+                String errorBody = response.getBody();
+
+                if (response.getStatusCode() == HttpStatus.CONFLICT && errorBody != null && !errorBody.isEmpty()) {
+                    throw new KeycloakException(errorBody);
+                }
+                throw new KeycloakException(ErrorMessage.Auth.ERR_CAN_NOT_CREATE_USER);
+            }
+
+            String userId = keycloakUtil.getUserId(request.account().gmail());
+
+            String roleId;
+
+            roleId = keycloakUtil.getRoleId("USER");
+            keycloakUtil.assignRoleToUser(userId, roleId);
+
+
+        } catch (Exception ex) {
+            throw new KeycloakException(ex.getMessage());
+        }
+
+        if (accountRepository.existsByGmailIgnoreCase(request.account().gmail())) {
+            throw new InvalidDataException("Email đã  tồn tại. Vui lòng tạo bằng email khác");
+        }
+
+        Account account  = new Account();
+        account.setGmail(request.account().gmail());
+        account.setPassword(passwordEncoder.encode(request.account().password()));
+        account.setMsisdn(request.account().msisdn());
+
+        accountRepository.save(account);
+
+        User user = new User();
+        user.setAccount(account);
+        user.setAvatar(Const.AVATAR_DEFAULT);
+        user.setName(request.name());
+        userRepository.save(user);
+
+        return UserResponseDto.builder().id(user.getId()).name(user.getName()).avatar(user.getAvatar()).build();
     }
 }

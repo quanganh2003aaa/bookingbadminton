@@ -14,10 +14,10 @@ public class PasscodeController {
 
     private final PasscodeService passcodeService;
 
-    @PostMapping("/register-owner")
-    public ApiResponse createRegisterOwnerPasscode(@RequestBody @Valid RegisterOwnerPasscodeRequest request) {
-        return ApiResponse.builder().result(passcodeService.createRegisterOwnerPasscode(request)).build();
-    }
+//    @PostMapping("/register-owner")
+//    public ApiResponse createRegisterOwnerPasscode(@RequestBody @Valid RegisterOwnerPasscodeRequest request) {
+//        return ApiResponse.builder().result(passcodeService.createRegisterOwnerPasscode(request)).build();
+//    }
 
 //    @GetMapping
 //    public ApiResponse list() {

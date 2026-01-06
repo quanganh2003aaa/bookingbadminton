@@ -1,7 +1,7 @@
 package com.example.bookingbadminton.config.ratelimit;
 
-import com.example.haus.config.ratelimit.impl.InMemoryBucketStorage;
-import com.example.haus.config.ratelimit.impl.RedisBucketStorage;
+import com.example.bookingbadminton.config.ratelimit.impl.InMemoryBucketStorage;
+import com.example.bookingbadminton.config.ratelimit.impl.RedisBucketStorage;
 import io.github.bucket4j.distributed.ExpirationAfterWriteStrategy;
 import io.github.bucket4j.distributed.proxy.ProxyManager;
 import io.github.bucket4j.redis.jedis.cas.JedisBasedProxyManager;

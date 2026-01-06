@@ -20,8 +20,4 @@ public interface PasscodeService {
     Passcode update(UUID id, UUID accountId, String code, TypePasscode type, ActiveStatus active, LocalDateTime time, Integer totalDay, Integer totalMonth);
 
     void delete(UUID id);
-
-    RegisterOwnerPasscodeResponse createRegisterOwnerPasscode(RegisterOwnerPasscodeRequest request);
-
-
 }

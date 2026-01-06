@@ -1,9 +1,9 @@
 package com.example.bookingbadminton.util.keycloak;
 
-import com.example.haus.config.keycloak.KeycloakProperties;
-import com.example.haus.constant.CommonConstant;
-import com.example.haus.constant.ErrorMessage;
-import com.example.haus.exception.KeycloakException;
+import com.example.bookingbadminton.config.keycloak.KeycloakProperties;
+import com.example.bookingbadminton.constant.CommonConstant;
+import com.example.bookingbadminton.constant.ErrorMessage;
+import com.example.bookingbadminton.exception.KeycloakException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -18,8 +18,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.example.haus.constant.CommonConstant.ADMIN_REALM;
-import static com.example.haus.constant.CommonConstant.USER_END_POINT;
+import static com.example.bookingbadminton.constant.CommonConstant.ADMIN_REALM;
+import static com.example.bookingbadminton.constant.CommonConstant.USER_END_POINT;
 
 @Component
 @Slf4j(topic = "EMAIL-KEYCLOAK")
@@ -125,7 +125,7 @@ public class KeycloakUtil {
 
 
     public String getAdminToken() {
-        final String adminUrl = keycloakProperties.serverUrl() + "realms/Haus/protocol/openid-connect/token";
+        final String adminUrl = keycloakProperties.serverUrl() + "realms/bookingbadminton/protocol/openid-connect/token";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -176,7 +176,7 @@ public class KeycloakUtil {
     public void assignRoleToUser(String userId, String roleId) {
 
         String url = keycloakProperties.serverUrl()
-                + "/admin/realms/" + keycloakProperties.realm()
+                + "admin/realms/" + keycloakProperties.realm()
                 + "/users/" + userId + "/role-mappings/realm";
 
         HttpHeaders headers = new HttpHeaders();
@@ -186,7 +186,7 @@ public class KeycloakUtil {
         // JSON body: [{ "id": roleId, "name": "USER" }]
         Map<String, Object> role = new HashMap<>();
         role.put("id", roleId);
-        role.put("name", "USER");
+        role.put("name", "OWNER");
 
         List<Map<String, Object>> roles = List.of(role);
 
@@ -204,7 +204,7 @@ public class KeycloakUtil {
     public String getRoleId(String roleName) {
 
         String url = keycloakProperties.serverUrl()
-                + "/admin/realms/" + keycloakProperties.realm()
+                + "admin/realms/" + keycloakProperties.realm()
                 + "/roles/" + roleName;
 
         HttpHeaders headers = new HttpHeaders();

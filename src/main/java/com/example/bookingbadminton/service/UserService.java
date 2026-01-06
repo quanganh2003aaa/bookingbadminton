@@ -16,8 +16,6 @@ public interface UserService {
 
     User get(UUID id);
 
-    User create(RegisterUserRequest request);
-
     User update(UUID id, UserRequest request);
 
     Page<UserAdminResponse> adminList(String search, Boolean locked, int page, int size);

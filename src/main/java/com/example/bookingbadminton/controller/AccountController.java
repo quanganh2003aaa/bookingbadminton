@@ -49,11 +49,11 @@ public class AccountController {
         return ApiResponse.builder().result(authenticationService.unlock(id)).build();
     }
 
-    //API đăng ký tài khoản người dùng
-    @PostMapping("/register-user")
-    public ResponseEntity<ApiResponse> registerUser(@RequestBody @Valid RegisterUserRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.builder().result( userService.create(request)).build());
-    }
+//    //API đăng ký tài khoản người dùng
+//    @PostMapping("/register-user")
+//    public ResponseEntity<ApiResponse> registerUser(@RequestBody @Valid RegisterUserRequest request) {
+//        return ResponseEntity.status(HttpStatus.CREATED)
+//                .body(ApiResponse.builder().result( userService.create(request)).build());
+//    }
 
 }

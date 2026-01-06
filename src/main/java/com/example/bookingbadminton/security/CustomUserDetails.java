@@ -1,6 +1,7 @@
 package com.example.bookingbadminton.security;
 
-import com.example.haus.domain.entity.user.User;
+import com.example.bookingbadminton.model.entity.Account;
+import com.example.bookingbadminton.model.entity.User;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -20,20 +21,20 @@ import java.util.List;
 public class CustomUserDetails implements UserDetails {
 
     transient User user;
-
+    transient Account account;
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(user.getRole().name()));
+        return List.of(new SimpleGrantedAuthority("USER"));
     }
 
     @Override
     public String getPassword() {
-        return user.getPassword();
+        return account.getPassword();
     }
 
     @Override
     public String getUsername() {
-        return user.getUsername();
+        return account.getGmail();
     }
 
     @Override
@@ -43,7 +44,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return !user.getIsLock();
+        return true;
     }
 
     @Override
@@ -53,7 +54,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return !user.getIsDeleted();
+        return true;
     }
 
     public User getUser() {

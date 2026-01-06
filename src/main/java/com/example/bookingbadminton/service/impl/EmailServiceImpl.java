@@ -1,6 +1,6 @@
 package com.example.bookingbadminton.service.impl;
 
-import com.example.haus.service.EmailService;
+import com.example.bookingbadminton.service.EmailService;
 import com.sendgrid.Method;
 import com.sendgrid.Request;
 import com.sendgrid.Response;
@@ -47,7 +47,7 @@ public class EmailServiceImpl implements EmailService {
     public void sendRegistrationOtpByEmail(String to, String name, String otp) {
         log.info("Send email verification for username = {}", name);
 
-        Email fromEmail = new Email(from, "HAUS");
+        Email fromEmail = new Email(from, "BookingBadminton");
         Email toEmail = new Email(to);
         String subject = "Xác thực tài khoản";
 
@@ -56,8 +56,6 @@ public class EmailServiceImpl implements EmailService {
         Map<String, String> dynamicTemplateData = new HashMap<>();
         dynamicTemplateData.put("NAME", name);
         dynamicTemplateData.put("OTP_CODE", otp);
-        dynamicTemplateData.put("IMAGE_PREV", imagePrev);
-        dynamicTemplateData.put("IMAGE_NEXT", imageNext);
         dynamicTemplateData.put("LOGO_LINK", logo);
 
         Mail mail = new Mail();

@@ -7,7 +7,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.example.bookingbadminton")
 @EnableConfigurationProperties({AdminInfoProperties.class, KeycloakProperties.class, FileUploadProperties.class })
 public class BookingbadmintonApplication {
 

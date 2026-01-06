@@ -8,7 +8,6 @@ import com.example.bookingbadminton.payload.request.RegisterOwnerPasscodeRequest
 import com.example.bookingbadminton.payload.RegisterOwnerPasscodeResponse;
 import com.example.bookingbadminton.repository.AccountRepository;
 import com.example.bookingbadminton.repository.PasscodeRepository;
-import com.example.bookingbadminton.service.AccountService;
 import com.example.bookingbadminton.service.PasscodeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,7 +27,6 @@ public class PasscodeServiceImpl implements PasscodeService {
 
     private final PasscodeRepository passcodeRepository;
     private final AccountRepository accountRepository;
-    private final AccountService accountService;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -76,51 +74,6 @@ public class PasscodeServiceImpl implements PasscodeService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Passcode not found");
         }
         passcodeRepository.deleteById(id);
-    }
-
-    @Override
-    @Transactional
-    public RegisterOwnerPasscodeResponse createRegisterOwnerPasscode(RegisterOwnerPasscodeRequest request) {
-        Account account = accountRepository.findByGmailIgnoreCase(request.account().gmail()).orElse(null);
-        if (account != null) {
-            if (account.getDeletedAt() != null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Account inactive");
-            }
-            if (!account.getMsisdn().equals(request.account().msisdn())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Msisdn does not match account");
-            }
-            if (!passwordEncoder.matches(request.account().password(), account.getPassword())) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
-            }
-        } else {
-            account = accountService.create(request.account());
-        }
-
-        Passcode passcode = passcodeRepository.findByAccount_Id(account.getId()).orElse(null);
-        LocalDateTime now = LocalDateTime.now();
-        if (passcode == null) {
-            passcode = new Passcode();
-            passcode.setAccount(account);
-            passcode.setType(TypePasscode.REGISTER_OWNER_CODE);
-            passcode.setActive(ActiveStatus.ACTIVE);
-            passcode.setCode(generateCode());
-            passcode.setTime(now);
-            passcode.setTotalDay(1);
-            passcode.setTotalMonth(1);
-        } else {
-            try {
-                applyUsageLimits(passcode, now);
-            } catch (ResponseStatusException ex) {
-                passcodeRepository.save(passcode);
-                throw ex;
-            }
-            passcode.setType(TypePasscode.REGISTER_OWNER_CODE);
-            passcode.setActive(ActiveStatus.ACTIVE);
-            passcode.setCode(generateCode());
-            passcode.setTime(now);
-        }
-        passcodeRepository.save(passcode);
-        return new RegisterOwnerPasscodeResponse(account.getId());
     }
 
     private void applyUsageLimits(Passcode passcode, LocalDateTime now) {

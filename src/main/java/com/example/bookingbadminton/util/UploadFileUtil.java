@@ -36,7 +36,7 @@ public class UploadFileUtil {
             String publicId = extractPublicId(safeFilename);
 
             Map<String, Object> uploadParams = ObjectUtils.asMap(
-                    "folder", "haus/products",
+                    "folder", "bookingbadminton/products",
                     "resource_type", "image",
                     "overwrite", true,
                     "public_id", publicId,
@@ -72,7 +72,7 @@ public class UploadFileUtil {
                     String publicId = extractPublicId(safeFilename);
 
                     Map<String, Object> uploadParams = ObjectUtils.asMap(
-                            "folder", "haus/products",
+                            "folder", "bookingbadminton/products",
                             "resource_type", "image",
                             "overwrite", true,
                             "public_id", publicId,

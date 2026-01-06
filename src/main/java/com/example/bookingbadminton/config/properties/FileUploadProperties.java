@@ -1,6 +1,6 @@
 package com.example.bookingbadminton.config.properties;
 
-import com.example.haus.constant.CommonConstant;
+import com.example.bookingbadminton.constant.CommonConstant;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;

@@ -1,6 +1,6 @@
 package com.example.bookingbadminton.config.ratelimit.impl;
 
-import com.example.haus.config.ratelimit.BucketStorage;
+import com.example.bookingbadminton.config.ratelimit.BucketStorage;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Refill;

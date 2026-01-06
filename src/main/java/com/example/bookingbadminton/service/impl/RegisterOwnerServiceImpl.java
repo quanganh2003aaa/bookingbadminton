@@ -53,7 +53,6 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
     @Value("${file.upload-dir:uploads}")
     private String uploadBaseDir;
 
-    private Map<String, PendingRegistration>
 
     @Override
     public List<RegisterOwner> findAll() {
@@ -68,29 +67,29 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
 
     @Override
     public RegisterOwner create(RegisterOwnerRequest request) {
-        emailService
-
-        return saveRegisterOwner(new RegisterOwner(), request);
+        return null;
+//                saveRegisterOwner(new RegisterOwner(), request);
     }
 
     @Override
     public RegisterOwner update(UUID id, RegisterOwnerRequest request) {
-        return saveRegisterOwner(get(id), request);
+        return null;
+//                saveRegisterOwner(get(id), request);
     }
 
-    private RegisterOwner saveRegisterOwner(RegisterOwner registerOwner, RegisterOwnerRequest request) {
-        Account account = accountRepository.findById(request.accountId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
-        registerOwner.setAccount(account);
-        registerOwner.setName(request.name());
-        registerOwner.setAddress(request.address());
-        registerOwner.setMobileContact(request.mobileContact());
-        registerOwner.setGmail(request.gmail());
-        registerOwner.setActive(request.active());
-        registerOwner.setLinkMap(request.linkMap());
-        registerOwner.setImgQr(storeBase64Image(request.imgQr(), uploadBaseDir, "register-owners"));
-        return registerOwnerRepository.save(registerOwner);
-    }
+//    private RegisterOwner saveRegisterOwner(RegisterOwner registerOwner, RegisterOwnerRequest request) {
+//        Account account = accountRepository.findById(request.accountId())
+//                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
+//        registerOwner.setAccount(account);
+//        registerOwner.setName(request.name());
+//        registerOwner.setAddress(request.address());
+//        registerOwner.setMobileContact(request.mobileContact());
+//        registerOwner.setGmail(request.gmail());
+//        registerOwner.setActive(request.active());
+//        registerOwner.setLinkMap(request.linkMap());
+//        registerOwner.setImgQr(storeBase64Image(request.imgQr(), uploadBaseDir, "register-owners"));
+//        return registerOwnerRepository.save(registerOwner);
+//    }
 
     @Override
     public void delete(UUID id) {

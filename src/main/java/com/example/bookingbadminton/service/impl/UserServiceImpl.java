@@ -7,7 +7,6 @@ import com.example.bookingbadminton.payload.UserRequest;
 import com.example.bookingbadminton.payload.request.RegisterUserRequest;
 import com.example.bookingbadminton.repository.AccountRepository;
 import com.example.bookingbadminton.repository.UserRepository;
-import com.example.bookingbadminton.service.AccountService;
 import com.example.bookingbadminton.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,7 +28,6 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final AccountRepository accountRepository;
-    private final AccountService accountService;
 
     @Override
     public List<User> findAll() {
@@ -42,12 +40,6 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng!"));
     }
 
-    @Override
-    public User create(RegisterUserRequest request) {
-        Account saved = accountService.create(request.account());
-        var userPayload = new UserRequest(saved.getId(), request.name(), AVATAR_DEFAULT);
-        return saveUser(new User(), userPayload);
-    }
 
     @Override
     public User update(UUID id, UserRequest request) {
