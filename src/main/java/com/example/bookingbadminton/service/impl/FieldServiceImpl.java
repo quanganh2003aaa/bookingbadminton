@@ -14,6 +14,7 @@ import com.example.bookingbadminton.payload.FieldOwnerDetailResponse;
 import com.example.bookingbadminton.payload.FieldOwnerSummaryResponse;
 import com.example.bookingbadminton.payload.FieldRequest;
 import com.example.bookingbadminton.payload.FieldUserDetailResponse;
+import com.example.bookingbadminton.payload.request.ValidOwnerRequest;
 import com.example.bookingbadminton.repository.BookingFieldRepository;
 import com.example.bookingbadminton.repository.BookingRepository;
 import com.example.bookingbadminton.repository.CommentRepository;
@@ -55,42 +56,42 @@ public class FieldServiceImpl implements FieldService {
     @Override
     public Field get(UUID id) {
         return fieldRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Field not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sân!"));
     }
 
-    @Override
-    public Field create(FieldRequest request) {
-        return saveField(new Field(), request);
-    }
+//    @Override
+//    public Field create(FieldRequest request) {
+//        return saveField(new Field(), request);
+//    }
+//
+//    @Override
+//    public Field update(UUID id, FieldRequest request) {
+//        return saveField(get(id), request);
+//    }
 
-    @Override
-    public Field update(UUID id, FieldRequest request) {
-        return saveField(get(id), request);
-    }
-
-    private Field saveField(Field field, FieldRequest request) {
-        Owner owner = ownerRepository.findById(request.ownerId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found"));
-        field.setOwner(owner);
-        field.setName(request.name());
-        field.setAddress(request.address());
-        field.setQuantity(request.quantity());
-        if (field.getIndexField() == null) {
-            field.setIndexField(0);
-        }
-        field.setMsisdn(request.msisdn());
-        field.setMobileContact(request.mobileContact());
-        field.setStartTime(request.startTime());
-        field.setEndTime(request.endTime());
-        field.setActive(request.active());
-        field.setLinkMap(request.linkMap());
-        Field saved = fieldRepository.save(field);
-        ensureTimeSlotsAlign(saved);
-        if (field.getParentField() == null && request.quantity() != null) {
-            syncSubFields(saved, request.quantity());
-        }
-        return saved;
-    }
+//    private Field saveField(Field field, FieldRequest request) {
+//        Owner owner = ownerRepository.findById(request.ownerId())
+//                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy chủ quản lý."));
+//        field.setOwner(owner);
+//        field.setName(request.name());
+//        field.setAddress(request.address());
+//        field.setQuantity(request.quantity());
+//        if (field.getIndexField() == null) {
+//            field.setIndexField(0);
+//        }
+//        field.setMsisdn(request.msisdn());
+//        field.setMobileContact(request.mobileContact());
+//        field.setStartTime(request.startTime());
+//        field.setEndTime(request.endTime());
+//        field.setActive(request.active());
+//        field.setLinkMap(request.linkMap());
+//        Field saved = fieldRepository.save(field);
+//        ensureTimeSlotsAlign(saved);
+//        if (field.getParentField() == null && request.quantity() != null) {
+//            syncSubFields(saved, request.quantity());
+//        }
+//        return saved;
+//    }
 
     @Override
     public void delete(UUID id) {
@@ -100,8 +101,8 @@ public class FieldServiceImpl implements FieldService {
     }
 
     @Override
-    public Page<FieldCardResponse> search(String search, ActiveStatus active, Pageable pageable) {
-        Page<Field> page = fieldRepository.findByFiltersForUser(search, active, pageable);
+    public Page<FieldCardResponse> search(String search, Pageable pageable) {
+        Page<Field> page = fieldRepository.findByFiltersForUser(search, ActiveStatus.ACTIVE, pageable);
         List<Field> parents = page.getContent().stream()
                 .filter(f -> f.getParentField() == null)
                 .toList();
@@ -144,23 +145,14 @@ public class FieldServiceImpl implements FieldService {
     @Override
     public Page<FieldOwnerSummaryResponse> ownerFields(UUID ownerId, Pageable pageable) {
         Owner owner = ownerRepository.findById(ownerId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy chủ quản lý."));
         Page<Field> page = fieldRepository.findByOwner_IdAndParentFieldIsNull(owner.getId(), pageable);
         return page.map(this::toOwnerSummary);
     }
 
     @Override
-    public FieldOwnerDetailResponse ownerFieldDetail(UUID ownerId, UUID fieldId) {
-        Owner owner = ownerRepository.findById(ownerId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found"));
-        Field field = get(fieldId);
-        if (!field.getOwner().getId().equals(owner.getId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Field not owned by this account");
-        }
-        var images = fieldImageRepository.findByField_Id(fieldId)
-                .stream()
-                .map(FieldImage::getImage)
-                .toList();
+    public FieldOwnerDetailResponse ownerFieldDetail(ValidOwnerRequest request, UUID fieldId) {
+        Field field = checkValidOwner(fieldId, request.ownerId());
         var timeSlots = timeSlotRepository.findByField_IdOrderByStartHour(fieldId)
                 .stream()
                 .map(ts -> new FieldOwnerDetailResponse.TimeSlotResponse(
@@ -175,29 +167,21 @@ public class FieldServiceImpl implements FieldService {
                 field.getName(),
                 field.getAddress(),
                 field.getQuantity(),
-                field.getMsisdn(),
                 field.getMobileContact(),
                 field.getStartTime(),
                 field.getEndTime(),
                 field.getActive(),
                 field.getLinkMap(),
-                images,
                 timeSlots
         );
     }
 
     @Override
-    public Field ownerUpdate(UUID ownerId, UUID fieldId, FieldRequest request) {
-        Owner owner = ownerRepository.findById(ownerId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found"));
-        Field field = get(fieldId);
-        if (!field.getOwner().getId().equals(owner.getId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Field not owned by this account");
-        }
+    public Field ownerUpdateField(UUID fieldId, FieldRequest request) {
+        Field field = checkValidOwner(fieldId, request.ownerId());
         field.setName(request.name());
         field.setAddress(request.address());
         field.setQuantity(request.quantity());
-        field.setMsisdn(request.msisdn());
         field.setMobileContact(request.mobileContact());
         field.setStartTime(request.startTime());
         field.setEndTime(request.endTime());
@@ -210,11 +194,21 @@ public class FieldServiceImpl implements FieldService {
         }
         return saved;
     }
+    
+    private Field checkValidOwner(UUID fieldId, UUID ownerId){
+        Owner owner = ownerRepository.findById(ownerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy chủ quản lý."));
+        Field field = get(fieldId);
+        if (!field.getOwner().getId().equals(owner.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Sân không thuộc quyền sở hữu của chủ quản lý hiện tại.");
+        }
+        return field;
+    }
 
     @Override
     public Page<FieldOwnerBookingSummary> ownerFieldBookings(UUID ownerId, Pageable pageable) {
         Owner owner = ownerRepository.findById(ownerId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy chủ quản lý."));
         Page<Field> page = fieldRepository.findByOwner_IdAndParentFieldIsNull(owner.getId(), pageable);
         LocalDate today = LocalDate.now();
         var counts = bookingRepository.countByParentFieldInDay(
@@ -234,13 +228,8 @@ public class FieldServiceImpl implements FieldService {
     }
 
     @Override
-    public FieldOwnerDailyBookingResponse ownerDailyBookings(UUID ownerId, UUID fieldId, LocalDate date) {
-        Owner owner = ownerRepository.findById(ownerId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found"));
+    public FieldOwnerDailyBookingResponse ownerDailyBookings(UUID fieldId, LocalDate date) {
         Field parent = get(fieldId);
-        if (!parent.getOwner().getId().equals(owner.getId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Field not owned by this account");
-        }
         if (parent.getParentField() != null) {
             parent = parent.getParentField();
         }
@@ -255,7 +244,6 @@ public class FieldServiceImpl implements FieldService {
                     bf.getBooking() != null ? bf.getBooking().getId() : null,
                     bf.getStartHour(),
                     bf.getEndHour(),
-                    bf.getBooking() != null ? bf.getBooking().getMsisdn() : null,
                     bf.getBooking() != null ? bf.getBooking().getStatus() : null
             );
             slotsByField.computeIfAbsent(bf.getField().getId(), k -> new ArrayList<>()).add(slot);
@@ -288,9 +276,7 @@ public class FieldServiceImpl implements FieldService {
     @Override
     public FieldUserDetailResponse userDetail(UUID fieldId) {
         Field f = get(fieldId);
-        var images = fieldImageRepository.findByField_Id(fieldId)
-                .stream().map(FieldImage::getImage).toList();
-        var avatar = images.isEmpty() ? null : images.get(0);
+        var avatar = ownerRepository.findById(f.getOwner().getId()).map(Owner::getAvatar).get();
         var comments = commentRepository.findByField_IdOrderByCreatedAtDesc(fieldId)
                 .stream()
                 .map(c -> new FieldUserDetailResponse.FieldCommentResponse(
@@ -318,7 +304,6 @@ public class FieldServiceImpl implements FieldService {
                 f.getEndTime(),
                 f.getActive(),
                 f.getLinkMap(),
-                images,
                 comments,
                 slots
         );
@@ -339,8 +324,8 @@ public class FieldServiceImpl implements FieldService {
     }
 
     private FieldCardResponse toCardResponse(Field field) {
-        String image = fieldImageRepository.findFirstByField_Id(field.getId())
-                .map(FieldImage::getImage)
+        String avatar = ownerRepository.findById(field.getOwner().getId())
+                .map(Owner::getAvatar)
                 .orElse(null);
         return new FieldCardResponse(
                 field.getId(),
@@ -349,7 +334,7 @@ public class FieldServiceImpl implements FieldService {
                 field.getStartTime(),
                 field.getEndTime(),
                 field.getMobileContact(),
-                image
+                avatar
         );
     }
 
@@ -358,7 +343,7 @@ public class FieldServiceImpl implements FieldService {
             return;
         }
         if (!field.getStartTime().isBefore(field.getEndTime())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Field start time must be before end time");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Thời gian bắt đầu phải lớn hơn thời gian kết thúc.");
         }
 
         var existing = timeSlotRepository.findByField_IdOrderByStartHour(field.getId());
@@ -377,7 +362,7 @@ public class FieldServiceImpl implements FieldService {
 
         for (TimeSlot s : existing) {
             if (s.getStartHour() == null || s.getEndHour() == null || !s.getStartHour().isBefore(s.getEndHour())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid timeslot range");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Khoảng thời gian không hợp lệ.");
             }
             if (!s.getEndHour().isAfter(field.getStartTime())) {
                 continue;

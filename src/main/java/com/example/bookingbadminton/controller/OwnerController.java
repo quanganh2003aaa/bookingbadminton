@@ -22,6 +22,7 @@ import java.util.UUID;
 public class OwnerController {
     private final FieldService fieldService;
 
+    //TODO API danh sách sân sở hữu (quản lý sân)
     @GetMapping("/fields")
     public ApiResponse ownerList(@RequestParam UUID ownerId,
                                  @RequestParam(defaultValue = "0") int page,
@@ -31,6 +32,7 @@ public class OwnerController {
         return ApiResponse.builder().result(PageResponse.from(result)).build();
     }
 
+    //TODO API danh sách sân sở hữu (tình trạng sân)
     @GetMapping("/field-booking")
     public ApiResponse ownerBookingSummary(@RequestParam UUID ownerId,
                                            @RequestParam(defaultValue = "0") int page,

@@ -10,6 +10,6 @@ public record FieldCardResponse(
         LocalTime startTime,
         LocalTime endTime,
         String mobileContact,
-        String image
+        String avatar
 ) {
 }

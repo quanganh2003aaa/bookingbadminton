@@ -16,7 +16,6 @@ public record FieldUserDetailResponse(
         LocalTime endTime,
         ActiveStatus active,
         String linkMap,
-        List<String> images,
         List<FieldCommentResponse> comments,
         List<TimeSlotResponse> timeSlots
 ) {

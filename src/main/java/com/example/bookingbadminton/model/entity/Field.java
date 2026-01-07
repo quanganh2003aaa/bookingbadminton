@@ -54,6 +54,9 @@ public class Field extends BaseModel {
     @Column(name = "end_time")
     private LocalTime endTime;
 
+    @Column(name = "img_qr", columnDefinition = "LONGTEXT")
+    private String imgQr;
+
     @Enumerated(EnumType.STRING)
     private ActiveStatus active;
 

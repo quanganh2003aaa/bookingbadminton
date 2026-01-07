@@ -10,6 +10,7 @@ import com.example.bookingbadminton.payload.FieldOwnerDailyBookingResponse;
 import com.example.bookingbadminton.payload.FieldOwnerSummaryResponse;
 import com.example.bookingbadminton.payload.FieldOwnerBookingSummary;
 import com.example.bookingbadminton.payload.FieldUserDetailResponse;
+import com.example.bookingbadminton.payload.request.ValidOwnerRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -22,13 +23,13 @@ public interface FieldService {
 
     Field get(UUID id);
 
-    Field create(FieldRequest request);
-
-    Field update(UUID id, FieldRequest request);
+//    Field create(FieldRequest request);
+//
+//    Field update(UUID id, FieldRequest request);
 
     void delete(UUID id);
 
-    Page<FieldCardResponse> search(String search, com.example.bookingbadminton.model.Enum.ActiveStatus active, Pageable pageable);
+    Page<FieldCardResponse> search(String search, Pageable pageable);
 
     Page<FieldAdminResponse> adminList(String search, Pageable pageable);
 
@@ -36,13 +37,13 @@ public interface FieldService {
 
     Page<FieldOwnerSummaryResponse> ownerFields(UUID ownerId, Pageable pageable);
 
-    FieldOwnerDetailResponse ownerFieldDetail(UUID ownerId, UUID fieldId);
+    FieldOwnerDetailResponse ownerFieldDetail(ValidOwnerRequest request, UUID fieldId);
 
-    Field ownerUpdate(UUID ownerId, UUID fieldId, FieldRequest request);
+    Field ownerUpdateField(UUID fieldId, FieldRequest request);
 
     Page<FieldOwnerBookingSummary> ownerFieldBookings(UUID ownerId, Pageable pageable);
 
-    FieldOwnerDailyBookingResponse ownerDailyBookings(UUID ownerId, UUID fieldId, LocalDate date);
+    FieldOwnerDailyBookingResponse ownerDailyBookings(UUID fieldId, LocalDate date);
 
     FieldUserDetailResponse userDetail(UUID fieldId);
 }

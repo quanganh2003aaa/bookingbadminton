@@ -10,7 +10,6 @@ public record FieldRequest(
         String name,
         String address,
         Integer quantity,
-        String msisdn,
         String mobileContact,
         LocalTime startTime,
         LocalTime endTime,

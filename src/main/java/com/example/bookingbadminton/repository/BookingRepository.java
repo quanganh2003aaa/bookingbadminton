@@ -23,7 +23,8 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
             WHERE bf.startHour >= :startOfDay AND bf.startHour < :endOfDay
             GROUP BY COALESCE(f.parentField.id, f.id)
             """)
-    List<Object[]> countByParentFieldInDay(@Param("startOfDay") LocalDateTime startOfDay, @Param("endOfDay") LocalDateTime endOfDay);
+    List<Object[]> countByParentFieldInDay(@Param("startOfDay") LocalDateTime startOfDay,
+                                           @Param("endOfDay") LocalDateTime endOfDay);
 
     @Query("""
             SELECT DISTINCT bf.booking FROM BookingField bf

@@ -23,7 +23,6 @@ public record FieldOwnerDailyBookingResponse(
             UUID bookingId,
             LocalDateTime startHour,
             LocalDateTime endHour,
-            String msisdn,
             BookingStatus status
     ) {}
 }

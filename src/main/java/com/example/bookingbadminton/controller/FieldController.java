@@ -1,17 +1,14 @@
 package com.example.bookingbadminton.controller;
 
-import com.example.bookingbadminton.model.Enum.ActiveStatus;
 import com.example.bookingbadminton.payload.ApiResponse;
 import com.example.bookingbadminton.payload.FieldCardResponse;
-import com.example.bookingbadminton.payload.FieldAdminResponse;
 import com.example.bookingbadminton.payload.FieldOwnerDetailResponse;
-import com.example.bookingbadminton.payload.FieldOwnerSummaryResponse;
-import com.example.bookingbadminton.payload.FieldOwnerBookingSummary;
 import com.example.bookingbadminton.payload.FieldOwnerDailyBookingResponse;
 import com.example.bookingbadminton.payload.FieldUserDetailResponse;
 import com.example.bookingbadminton.payload.FieldRequest;
 import com.example.bookingbadminton.payload.PageResponse;
 import com.example.bookingbadminton.model.Enum.TypeImage;
+import com.example.bookingbadminton.payload.request.ValidOwnerRequest;
 import com.example.bookingbadminton.service.FieldService;
 import com.example.bookingbadminton.service.FieldImageService;
 import lombok.RequiredArgsConstructor;
@@ -34,46 +31,48 @@ public class FieldController {
     private final FieldService fieldService;
     private final FieldImageService fieldImageService;
 
-    //API owner chi tiết sân
-    @GetMapping("/owner/{id:[0-9a-fA-F\\-]{36}}")
-    public ApiResponse ownerDetail(@PathVariable UUID id, @RequestParam UUID ownerId) {
-        FieldOwnerDetailResponse detail = fieldService.ownerFieldDetail(ownerId, id);
-        return ApiResponse.builder().result(detail).build();
+    //TODO API danh sách sân (trang chủ)
+    @GetMapping
+    public ApiResponse listFieldHomePage(@RequestParam(defaultValue = "0") int page,
+                            @RequestParam(defaultValue = "10") int size,
+                            @RequestParam(required = false) String search) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<FieldCardResponse> result = fieldService.search(search, pageable);
+        return ApiResponse.builder().result(PageResponse.from(result)).build();
     }
 
-    //API chi tiết sân - public
+    //TODO API chi tiết sân (trang chủ)
     @GetMapping("/{id}/detail")
-    public ApiResponse userDetail(@PathVariable UUID id) {
+    public ApiResponse detailFieldHomePage(@PathVariable UUID id) {
         FieldUserDetailResponse detail = fieldService.userDetail(id);
         return ApiResponse.builder().result(detail).build();
     }
 
-    //API cập nhật thông tin sân
-    @PutMapping("/owner/{id:[0-9a-fA-F\\-]{36}}")
-    public ApiResponse ownerUpdate(@PathVariable UUID id,
-                                   @RequestParam UUID ownerId,
-                                   @RequestBody FieldRequest request) {
-        return ApiResponse.builder().result(fieldService.ownerUpdate(ownerId, id, request)).build();
-    }
-
-    //API owner chi tiết tình trạng sân
-    @GetMapping("/{id:[0-9a-fA-F\\-]{36}}/bookings")
+    //TODO API chi tiết tình trạng sân
+    @GetMapping ("/{id:[0-9a-fA-F\\-]{36}}/bookings")
     public ApiResponse ownerDailyBookings(@PathVariable UUID id,
-                                          @RequestParam UUID ownerId,
                                           @RequestParam LocalDate date) {
-        FieldOwnerDailyBookingResponse result = fieldService.ownerDailyBookings(ownerId, id, date);
+        FieldOwnerDailyBookingResponse result = fieldService.ownerDailyBookings(id, date);
         return ApiResponse.builder().result(result).build();
     }
 
-    @GetMapping
-    public ApiResponse list(@RequestParam(defaultValue = "0") int page,
-                            @RequestParam(defaultValue = "10") int size,
-                            @RequestParam(required = false) String search,
-                            @RequestParam(required = false) ActiveStatus active) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<FieldCardResponse> result = fieldService.search(search, active, pageable);
-        return ApiResponse.builder().result(PageResponse.from(result)).build();
+    //TODO API owner chi tiết sân
+    @PostMapping("/{id:[0-9a-fA-F\\-]{36}}/owner")
+    public ApiResponse ownerDetail(@PathVariable UUID id, @RequestBody ValidOwnerRequest request) {
+        FieldOwnerDetailResponse detail = fieldService.ownerFieldDetail(request, id);
+        return ApiResponse.builder().result(detail).build();
     }
+
+    //TODO API cập nhật thông tin sân
+    @PutMapping("/{id:[0-9a-fA-F\\-]{36}}/owner")
+    public ApiResponse ownerUpdateField(@PathVariable UUID id,
+                                   @RequestBody FieldRequest request) {
+        return ApiResponse.builder().result(fieldService.ownerUpdateField(id, request)).build();
+    }
+
+
+
+
 //
 //    @GetMapping("/{id}")
 //    public ApiResponse get(@PathVariable UUID id) {
@@ -92,12 +91,12 @@ public class FieldController {
 
 
 
-    @PostMapping
-    public ResponseEntity<ApiResponse> create(@RequestBody FieldRequest r) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.builder()
-                .result(fieldService.create(r))
-                .build());
-    }
+//    @PostMapping
+//    public ResponseEntity<ApiResponse> create(@RequestBody FieldRequest r) {
+//        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.builder()
+//                .result(fieldService.create(r))
+//                .build());
+//    }
 
     @PostMapping("/{id}/images")
     public ResponseEntity<ApiResponse> addImage(@PathVariable UUID id, @RequestBody FieldImageAddRequest request) {
@@ -120,10 +119,10 @@ public class FieldController {
         return ApiResponse.builder().result(fieldImageService.listByField(id)).build();
     }
 
-    @PutMapping("/{id}")
-    public ApiResponse update(@PathVariable UUID id, @RequestBody FieldRequest request) {
-        return ApiResponse.builder().result(fieldService.update(id, request)).build();
-    }
+//    @PutMapping("/{id}")
+//    public ApiResponse update(@PathVariable UUID id, @RequestBody FieldRequest request) {
+//        return ApiResponse.builder().result(fieldService.update(id, request)).build();
+//    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
