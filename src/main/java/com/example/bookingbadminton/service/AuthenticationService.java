@@ -34,9 +34,9 @@ public interface AuthenticationService {
 
     String unlock(UUID id);
 
-    void registerOwner(RegisterOwnerRequest request, MultipartFile file);
+    void registerOwner(RegisterOwnerRequest request);
 
-    RegisterOwnerResponse verifyOtpToRegister(VerifyOtpRequestDto request);
+    RegisterOwnerResponse verifyOtpToRegister(VerifyOtpRequestDto request, MultipartFile file);
 
     void logout (LogoutRequestDto logoutRequestDto);
 

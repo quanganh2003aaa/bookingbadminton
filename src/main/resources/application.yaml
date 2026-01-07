@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: "jdbc:mysql://127.0.0.1:3306/bookingbadminton"
+    url: "jdbc:mysql://127.0.0.1:3306/bookingbadminton?createDatabaseIfNotExist=true"
     username: root
     password: Quankane1905@
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -29,10 +29,10 @@ spring:
     apiKey: ${SENDGRID_API_KEY}
     fromEmail: phamquanganh20122003@gmail.com
     templateRegistrationId: d-1db9a7cd44094c3d8e90826aa8d4334d
-    templateForgotId: d-a71ca0b41fc1437ca11a3002a0235c19
-    imagePrev: https://res.ckeycloakloudinary.com/dgwnoquie/image/upload/v1755789933/image-43_f3kmgh.jpg
-    imageNext: https://res.cloudinary.com/dgwnoquie/image/upload/v1755790009/KHACH-BEP-15_bj8u43.jpg
-    logo: https://res.cloudinary.com/dgwnoquie/image/upload/v1755791051/HAUS-logo_byhum7.jpg
+    templateForgotId: d-0694bc79db1d48ad91c96308b0de22b2
+    createRegisterOwnerSuccess: d-bf457aac0da24fa489fce3ca6eebfb4a
+    createRegisterOwnerFailure: d-5d749bccbb80482cbccf22ca1f74633d
+    logo: https://res.cloudinary.com/dwu5iqyon/image/upload/v1767538495/logo_mjt4j0.png
 file:
   upload-dir: 'C:\Users\My Computer\OneDrive\Desktop\hoctap\doantotnghiep\bookingbadminton-frontend\public\upload'
 jwt:
@@ -89,6 +89,6 @@ file-upload:
 
 #Cloudinary
 cloudinary:
-  cloud_name: ${CLOUDINARY_NAME:dgwnoquie}
-  api_key: ${CLOUDINARY_API_KEY:671838345639772}
-  secret_key: ${CLOUDINARY_SECRET_KEY:-xdwjAMbATWoIvkpbT_-6K5TuIg}
+  cloud_name: ${CLOUDINARY_NAME:dwu5iqyon}
+  api_key: ${CLOUDINARY_API_KEY:445365335882743}
+  secret_key: ${CLOUDINARY_SECRET_KEY:zzXsc3JvolLB4SvRnXE3RQpM0UI}

@@ -67,6 +67,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final PasscodeRepository passcodeRepository;
     private final UploadFileUtil uploadFileUtil;
     private final AuthMapper authMapper;
+    private final OtpUtil otpUtil;
     private final RegisterOwnerRepository registerOwnerRepository;
     private ConcurrentHashMap<String, PendingRegistrationRequestDto> pendingRegistrationRequestMap = new ConcurrentHashMap<>();
     private Map<String, PendingResetPasswordRequestDto> pendingResetPasswordMap = new ConcurrentHashMap<>();
@@ -198,7 +199,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     @Transactional
-    public void registerOwner(RegisterOwnerRequest request, MultipartFile file) {
+    public void registerOwner(RegisterOwnerRequest request) {
 
         final String url = keycloakProperties.serverUrl() + "admin/realms/" + keycloakProperties.realm() + "/users";
 
@@ -272,7 +273,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         pending.setRequest(request);
         pending.setPasscode(passcode);
-        pending.setFile(file);
 
         pendingRegistrationRequestMap.put(request.gmail(), pending);
 
@@ -280,11 +280,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public RegisterOwnerResponse verifyOtpToRegister(VerifyOtpRequestDto request) {
+    @Transactional
+    public RegisterOwnerResponse verifyOtpToRegister(VerifyOtpRequestDto request, MultipartFile file) {
         PendingRegistrationRequestDto pending = pendingRegistrationRequestMap.get(request.getEmail());
 
         if (pending == null){
             throw new InvalidDataException(ErrorMessage.Auth.ERR_PENDING_REGISTER_REQUEST_NULL);
+        }
+
+        if (pending.getPasscode().getActive() != ActiveStatus.ACTIVE) {
+            throw new InvalidDataException("Passcode ko hoạt động");
         }
 
         if (pending.isExpired())
@@ -292,6 +297,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         if (!pending.getPasscode().getCode().equals(request.getOtp()))
             throw new InvalidDataException(ErrorMessage.Auth.ERR_OTP_NOT_MATCH);
+        pending.setFile(file);
+        if (pending.getFile() == null) {
+            throw new InvalidDataException("File QR is required");
+        }
 
         if (!keycloakUtil.verifyEmail(keycloakUtil.getUserId(request.getEmail()), true)) {
             throw new KeycloakException(ErrorMessage.Auth.ERR_VERIFY_FAILED_IN_KEYCLOAK);
@@ -310,6 +319,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         registerOwner.setImgQr(imageQrSecure);
         registerOwner.setLinkMap(req.linkMap());
         registerOwner.setMobileContact(req.mobileContact());
+
+        pending.getPasscode().setActive(ActiveStatus.INACTIVE);
+
+        passcodeRepository.save(pending.getPasscode());
 
         registerOwnerRepository.save(registerOwner);
 
@@ -351,20 +364,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public void forgotPassword(ForgotPasswordRequestDto request) {
-        Account account = accountRepository.findByGmailIgnoreCase(request.getEmail()).orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.User.ERR_EMAIL_NOT_EXISTED));
-        Passcode passcode = passcodeRepository.findByAccount_Id(account.getId()).orElseThrow(
-                () -> new ResourceNotFoundException("Không tìm thấy passcode từ account")
-        );
-
-        if (passcode.getTotalDay() >= 5 || passcode.getTotalMonth() >= 15) {
-            throw new InvalidDataException("Passcode quá lượt giới hạn");
-        }
-
-        String otp = OtpUtil.generateOtp();
-        passcode.setCode(otp);
-        passcode.setTime(LocalDateTime.now().plusMinutes(5));
-        passcode.setTotalDay(passcode.getTotalDay() + 1);
-        passcode.setTotalMonth(passcode.getTotalMonth() + 1);
+        Passcode passcode = otpUtil.hasValidBeforeHasOtp(request.getEmail());
 
         PendingResetPasswordRequestDto pending = new PendingResetPasswordRequestDto();
 
@@ -373,7 +373,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         pendingResetPasswordMap.put(request.getEmail(), pending);
 
-        emailService.sendForgotPasswordOtpByEmail(request.getEmail(), request.getEmail(), otp);
+        emailService.sendForgotPasswordOtpByEmail(request.getEmail(), request.getEmail(), passcode.getCode());
     }
 
     @Override
@@ -386,8 +386,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (pending.isExpired())
             throw new InvalidDataException(ErrorMessage.Auth.ERR_OTP_EXPIRED);
 
-        if (!pending.getPasscode().getCode().equals(request.getOtp()))
-            throw new InvalidDataException(ErrorMessage.Auth.ERR_OTP_NOT_MATCH);
+        otpUtil.hasValidAfterHasOtp(pending.getPasscode(), request.getOtp());
 
         return pendingResetPasswordMap.containsKey(request.getEmail())
                 && pendingResetPasswordMap.get(request.getEmail()).getPasscode().getCode().equals(request.getOtp());
@@ -398,9 +397,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         PendingResetPasswordRequestDto pending = pendingResetPasswordMap.get(request.getEmail());
         if (pending == null)
             throw new InvalidDataException(ErrorMessage.Auth.ERR_PENDING_RESET_REQUEST_NULL);
-
-        if (pending.isExpired())
-            throw new InvalidDataException(ErrorMessage.Auth.ERR_OTP_EXPIRED);
 
         Account account = accountRepository.findByGmailIgnoreCase(request.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.User.ERR_USER_NOT_EXISTED));

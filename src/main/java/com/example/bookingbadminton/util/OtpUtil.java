@@ -10,6 +10,7 @@ import com.example.bookingbadminton.repository.AccountRepository;
 import com.example.bookingbadminton.repository.PasscodeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.file.Files;
@@ -21,6 +22,7 @@ import java.util.Base64;
 import java.util.UUID;
 
 @RequiredArgsConstructor
+@Component
 public final class OtpUtil {
 
     private final PasscodeRepository passcodeRepository;
@@ -33,7 +35,7 @@ public final class OtpUtil {
         return String.valueOf(otp);
     }
 
-    public void hasValidBeforeHasOtp(String gmail) {
+    public Passcode hasValidBeforeHasOtp(String gmail) {
         Account account = accountRepository.findByGmailIgnoreCase(gmail).orElseThrow(() -> new ResourceNotFoundException(ErrorMessage.User.ERR_EMAIL_NOT_EXISTED));
         Passcode passcode = passcodeRepository.findByAccount_Id(account.getId()).orElseGet(null);
         LocalDateTime now = LocalDateTime.now();
@@ -43,7 +45,7 @@ public final class OtpUtil {
             passcode.setType(TypePasscode.REGISTER_OWNER_CODE);
             passcode.setActive(ActiveStatus.ACTIVE);
             passcode.setCode(generateOtp());
-            passcode.setTime(now);
+            passcode.setTime(now.plusMinutes(5));
             passcode.setTotalDay(1);
             passcode.setTotalMonth(1);
         } else {
@@ -56,8 +58,9 @@ public final class OtpUtil {
             passcode.setType(TypePasscode.REGISTER_OWNER_CODE);
             passcode.setActive(ActiveStatus.ACTIVE);
             passcode.setCode(generateOtp());
-            passcode.setTime(now);
+            passcode.setTime(now.plusMinutes(5));
         }
+        return passcode;
     }
 
     public void hasValidAfterHasOtp(Passcode passcode, String otpNeedVerify) {
@@ -80,10 +83,6 @@ public final class OtpUtil {
             passcodeRepository.save(passcode);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Passcode invalid");
         }
-    }
-
-    private OtpUtil() {
-        throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
     }
 
     private void applyUsageLimits(Passcode passcode, LocalDateTime now) {

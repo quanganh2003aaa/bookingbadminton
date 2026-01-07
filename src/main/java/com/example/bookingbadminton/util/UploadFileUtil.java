@@ -29,17 +29,16 @@ public class UploadFileUtil {
 
 
     public String uploadFile(MultipartFile multipartFile) {
-        fileValidatorService.validateFile(multipartFile, MediaType.IMAGE);
+//        fileValidatorService.validateFile(multipartFile, MediaType.IMAGE);
 
         try {
-            String safeFilename = fileValidatorService.generateSafeFileName(multipartFile.getOriginalFilename());
-            String publicId = extractPublicId(safeFilename);
+//            String safeFilename = fileValidatorService.generateSafeFileName(multipartFile.getOriginalFilename());
+//            String publicId = extractPublicId(safeFilename);
 
             Map<String, Object> uploadParams = ObjectUtils.asMap(
-                    "folder", "bookingbadminton/products",
+                    "folder", "bookingbadminton",
                     "resource_type", "image",
                     "overwrite", true,
-                    "public_id", publicId,
                     "transformation", "w_400,h_400,c_fill,q_auto");
 
             Map result = cloudinary.uploader().upload(

@@ -34,12 +34,6 @@ public class EmailServiceImpl implements EmailService {
     @Value("${spring.sendGrid.templateForgotId}")
     private String templateForgotId;
 
-    @Value("${spring.sendGrid.imagePrev}")
-    private String imagePrev;
-
-    @Value("${spring.sendGrid.imageNext}")
-    private String imageNext;
-
     @Value("${spring.sendGrid.logo}")
     private String logo;
 
@@ -99,8 +93,6 @@ public class EmailServiceImpl implements EmailService {
         Map<String, String> dynamicTemplateData = new HashMap<>();
         dynamicTemplateData.put("NAME", name);
         dynamicTemplateData.put("OTP_CODE", otp);
-        dynamicTemplateData.put("IMAGE_PREV", imagePrev);
-        dynamicTemplateData.put("IMAGE_NEXT", imageNext);
         dynamicTemplateData.put("LOGO_LINK", logo);
 
         Mail mail = new Mail();
