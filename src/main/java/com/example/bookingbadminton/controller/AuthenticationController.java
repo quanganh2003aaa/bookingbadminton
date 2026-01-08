@@ -54,21 +54,21 @@ public class AuthenticationController {
                 authenticationService.refresh(request));
     }
 
-    @PostMapping(value = "/register-owner", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/register-owner", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ResponseData<Void>> registerOwner(
-            @RequestPart("request") @Valid RegisterOwnerRequest request,
-            @RequestPart("file") MultipartFile file
+            @RequestBody @Valid RegisterOwnerRequest request
     ) {
-        authenticationService.registerOwner(request, file);
+        authenticationService.registerOwner(request);
         return ResponseUtil.success(HttpStatus.OK, SuccessMessage.Auth.REGISTER_SEND_OTP_SUCCESS);
     }
 
-    @PostMapping("/verify-otp-register")
+    @PostMapping(value = "/verify-otp-register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ResponseData<RegisterOwnerResponse>> verifyOtpToRegister(
-            @RequestBody @Valid VerifyOtpRequestDto request
+            @RequestPart("request") @Valid VerifyOtpRequestDto request,
+            @RequestPart("file") MultipartFile file
     ) {
         return ResponseUtil.success(SuccessMessage.Auth.VERIFY_OTP_REGISTER_SUCCESS,
-                authenticationService.verifyOtpToRegister(request));
+                authenticationService.verifyOtpToRegister(request, file));
     }
 
     @PostMapping("/forgot-password")
