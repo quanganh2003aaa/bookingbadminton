@@ -38,7 +38,7 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy chủ quản lý."));
         Field field = fieldRepository.findByIdAndOwner(request.subFieldId(), owner)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sân không thuộc quyền quản lý."));
-        Booking booking = bookingRepository.findByIdAndField(bookingId, field)
+        Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Đơn đặt sân không xác định."));
 
         booking.setStatus(BookingStatus.ACCEPT);
@@ -51,7 +51,7 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy chủ quản lý."));
         Field field = fieldRepository.findByIdAndOwner(request.subFieldId(), owner)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sân không thuộc quyền quản lý."));
-        Booking booking = bookingRepository.findByIdAndField(bookingId, field)
+        Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Đơn đặt sân không xác định."));
 
         booking.setStatus(BookingStatus.INACCEPT);
@@ -73,7 +73,6 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Field not found"));
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        booking.setField(field);
         booking.setUser(user);
         booking.setMsisdn(msisdn);
         booking.setStatus(status);
@@ -89,7 +88,6 @@ public class BookingServiceImpl implements BookingService {
             link.setField(field);
             link.setStartHour(startHour);
             link.setEndHour(endHour);
-            link.setIndexField(field.getIndexField());
             List<BookingField> newLinks = new ArrayList<>();
             newLinks.add(link);
             booking.setBookingField(newLinks);
@@ -100,7 +98,6 @@ public class BookingServiceImpl implements BookingService {
         link.setField(field);
         link.setStartHour(startHour);
         link.setEndHour(endHour);
-        link.setIndexField(field.getIndexField());
     }
 
     @Override
@@ -200,7 +197,6 @@ public class BookingServiceImpl implements BookingService {
 
         Booking booking = new Booking();
         booking.setStatus(BookingStatus.PENDING);
-        booking.setField(parent);
         booking.setUser(user);
         booking.setMsisdn(user.getAccount() != null ? user.getAccount().getMsisdn() : null);
 
@@ -255,7 +251,6 @@ public class BookingServiceImpl implements BookingService {
             bf.setField(sub);
             bf.setStartHour(start);
             bf.setEndHour(end);
-            bf.setIndexField(sub.getIndexField());
             links.add(bf);
 
             items.add(new TempBookingResponse.TempBookingItem(

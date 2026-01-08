@@ -42,8 +42,7 @@ public class Field extends BaseModel {
     private Integer quantity;
 
     @Column(name = "index_field")
-    @Builder.Default
-    private Integer indexField = 0;
+    private Integer indexField;
 
     @Column(name = "start_time")
     private LocalTime startTime;

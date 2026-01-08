@@ -239,7 +239,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             String roleId;
 
             roleId = keycloakUtil.getRoleId("OWNER");
-            keycloakUtil.assignRoleToUser(userId, roleId);
+            keycloakUtil.assignRoleToUser(userId, roleId, "OWNER");
 
 
         } catch (Exception ex) {
@@ -498,7 +498,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             String roleId;
 
             roleId = keycloakUtil.getRoleId("USER");
-            keycloakUtil.assignRoleToUser(userId, roleId);
+            keycloakUtil.assignRoleToUser(userId, roleId, "USER");
 
 
         } catch (Exception ex) {

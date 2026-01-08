@@ -173,7 +173,7 @@ public class KeycloakUtil {
         throw new RuntimeException("User not found in Keycloak with provided username or email");
     }
 
-    public void assignRoleToUser(String userId, String roleId) {
+    public void assignRoleToUser(String userId, String roleId, String roleName) {
 
         String url = keycloakProperties.serverUrl()
                 + "admin/realms/" + keycloakProperties.realm()
@@ -186,7 +186,7 @@ public class KeycloakUtil {
         // JSON body: [{ "id": roleId, "name": "USER" }]
         Map<String, Object> role = new HashMap<>();
         role.put("id", roleId);
-        role.put("name", "OWNER");
+        role.put("name", roleName);
 
         List<Map<String, Object>> roles = List.of(role);
 

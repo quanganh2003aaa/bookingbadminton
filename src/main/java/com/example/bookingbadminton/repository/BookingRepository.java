@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface BookingRepository extends JpaRepository<Booking, UUID> {
-    Optional<Booking> findByIdAndField(UUID id, Field field);
+    Optional<Booking> findById(UUID id);
     @Query("""
             SELECT bf.field.id, COUNT(bf) FROM BookingField bf
             WHERE bf.startHour >= :startOfDay AND bf.startHour < :endOfDay
