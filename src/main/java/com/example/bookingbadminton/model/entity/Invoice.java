@@ -29,6 +29,8 @@ public class Invoice extends BaseModel {
 
     private Integer price;
 
+    private String imgPayment;
+
     @Enumerated(EnumType.STRING)
     private InvoiceStatus status;
 }

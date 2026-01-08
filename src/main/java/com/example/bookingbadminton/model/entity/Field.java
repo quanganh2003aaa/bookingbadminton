@@ -4,11 +4,7 @@ import com.example.bookingbadminton.model.BaseModel;
 import com.example.bookingbadminton.model.Enum.ActiveStatus;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 import java.time.LocalTime;
 import java.util.List;
@@ -46,7 +42,8 @@ public class Field extends BaseModel {
     private Integer quantity;
 
     @Column(name = "index_field")
-    private Integer indexField;
+    @Builder.Default
+    private Integer indexField = 0;
 
     @Column(name = "start_time")
     private LocalTime startTime;

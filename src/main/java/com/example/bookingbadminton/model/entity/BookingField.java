@@ -33,7 +33,4 @@ public class BookingField {
 
     @Column(name = "end_hour")
     private LocalDateTime endHour;
-
-    @Column(name = "index_field")
-    private Integer indexField;
 }

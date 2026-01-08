@@ -123,7 +123,6 @@ public class BookingServiceImpl implements BookingService {
                     bf.getBooking() != null ? bf.getBooking().getId() : null,
                     bf.getStartHour(),
                     bf.getEndHour(),
-                    bf.getBooking() != null ? bf.getBooking().getMsisdn() : null,
                     bf.getBooking() != null ? bf.getBooking().getStatus() : null
             );
             slotsByField.computeIfAbsent(bf.getField().getId(), k -> new ArrayList<>()).add(slot);

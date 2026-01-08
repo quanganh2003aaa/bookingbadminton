@@ -43,10 +43,10 @@ public class BookingController {
         return ApiResponse.builder().result(result).build();
     }
 
-    @GetMapping
-    public ApiResponse list() {
-        return ApiResponse.builder().result(bookingService.findAll()).build();
-    }
+//    @GetMapping
+//    public ApiResponse list() {
+//        return ApiResponse.builder().result(bookingService.findAll()).build();
+//    }
 
     @GetMapping("/{id}")
     public ApiResponse get(@PathVariable UUID id) {
@@ -57,79 +57,79 @@ public class BookingController {
 
 
 
-    @PostMapping
-    public ResponseEntity<ApiResponse> create(@RequestBody BookingRequest request) {
-        Booking saved = bookingService.create(
-                request.fieldId(),
-                request.userId(),
-                request.msisdn(),
-                request.indexField(),
-                request.startHour(),
-                request.endHour(),
-                request.status()
-        );
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.builder().result(saved).build());
-    }
-
-    @PostMapping("/batch")
-    public ResponseEntity<ApiResponse> createBatch(@RequestBody BookingBatchRequest request) {
-        List<Booking> saved = request.items().stream()
-                .map(item -> bookingService.create(
-                        request.fieldId(),
-                        request.userId(),
-                        request.msisdn(),
-                        item.indexField(),
-                        item.startHour(),
-                        item.endHour(),
-                        request.status()
-                ))
-                .toList();
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.builder().result(saved).build());
-    }
-
-    @PostMapping("/with-invoice")
-    public ResponseEntity<ApiResponse> createWithInvoice(@RequestBody BookingWithInvoiceRequest request) {
-        Booking saved = bookingService.create(
-                request.fieldId(),
-                request.userId(),
-                request.msisdn(),
-                request.indexField(),
-                request.startHour(),
-                request.endHour(),
-                request.status()
-        );
-        Invoice invoice = invoiceService.create(saved.getId(), request.price(), request.invoiceStatus());
-        var response = java.util.Map.of(
-                "booking", saved,
-                "invoice", invoice
-        );
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.builder().result(response).build());
-    }
-
-    @PutMapping("/{id}")
-    public ApiResponse update(@PathVariable UUID id, @RequestBody BookingRequest request) {
-        return ApiResponse.builder()
-                .result(bookingService.update(
-                        id,
-                        request.fieldId(),
-                        request.userId(),
-                        request.msisdn(),
-                        request.indexField(),
-                        request.startHour(),
-                        request.endHour(),
-                        request.status()
-                ))
-                .build();
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        bookingService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
+//    @PostMapping
+//    public ResponseEntity<ApiResponse> create(@RequestBody BookingRequest request) {
+//        Booking saved = bookingService.create(
+//                request.fieldId(),
+//                request.userId(),
+//                request.msisdn(),
+//                request.indexField(),
+//                request.startHour(),
+//                request.endHour(),
+//                request.status()
+//        );
+//        return ResponseEntity.status(HttpStatus.CREATED)
+//                .body(ApiResponse.builder().result(saved).build());
+//    }
+//
+//    @PostMapping("/batch")
+//    public ResponseEntity<ApiResponse> createBatch(@RequestBody BookingBatchRequest request) {
+//        List<Booking> saved = request.items().stream()
+//                .map(item -> bookingService.create(
+//                        request.fieldId(),
+//                        request.userId(),
+//                        request.msisdn(),
+//                        item.indexField(),
+//                        item.startHour(),
+//                        item.endHour(),
+//                        request.status()
+//                ))
+//                .toList();
+//        return ResponseEntity.status(HttpStatus.CREATED)
+//                .body(ApiResponse.builder().result(saved).build());
+//    }
+//
+//    @PostMapping("/with-invoice")
+//    public ResponseEntity<ApiResponse> createWithInvoice(@RequestBody BookingWithInvoiceRequest request) {
+//        Booking saved = bookingService.create(
+//                request.fieldId(),
+//                request.userId(),
+//                request.msisdn(),
+//                request.indexField(),
+//                request.startHour(),
+//                request.endHour(),
+//                request.status()
+//        );
+//        Invoice invoice = invoiceService.create(saved.getId(), request.price(), request.invoiceStatus());
+//        var response = java.util.Map.of(
+//                "booking", saved,
+//                "invoice", invoice
+//        );
+//        return ResponseEntity.status(HttpStatus.CREATED)
+//                .body(ApiResponse.builder().result(response).build());
+//    }
+//
+//    @PutMapping("/{id}")
+//    public ApiResponse update(@PathVariable UUID id, @RequestBody BookingRequest request) {
+//        return ApiResponse.builder()
+//                .result(bookingService.update(
+//                        id,
+//                        request.fieldId(),
+//                        request.userId(),
+//                        request.msisdn(),
+//                        request.indexField(),
+//                        request.startHour(),
+//                        request.endHour(),
+//                        request.status()
+//                ))
+//                .build();
+//    }
+//
+//    @DeleteMapping("/{id}")
+//    public ResponseEntity<Void> delete(@PathVariable UUID id) {
+//        bookingService.delete(id);
+//        return ResponseEntity.noContent().build();
+//    }
 
 //    @GetMapping("/by-day")
 //    public ApiResponse findByDay(@RequestParam java.time.LocalDate date) {

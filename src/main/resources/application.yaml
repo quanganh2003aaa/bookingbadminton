@@ -1,14 +1,14 @@
 spring:
   datasource:
-    url: "jdbc:mysql://127.0.0.1:3306/bookingbadminton?createDatabaseIfNotExist=true"
+    url: "jdbc:mysql://127.0.0.1:3307/bookingbadminton?createDatabaseIfNotExist=true"
     username: root
-    password: Quankane1905@
+    password: 'gungun2k3'
     driver-class-name: com.mysql.cj.jdbc.Driver
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8180/realms/Haus
+          issuer-uri: http://localhost:8180/realms/bookingbadminton
   jpa:
     hibernate:
       ddl-auto: update
