@@ -172,6 +172,7 @@ public class FieldServiceImpl implements FieldService {
                 field.getEndTime(),
                 field.getActive(),
                 field.getLinkMap(),
+                field.getImgQr(),
                 timeSlots
         );
     }

@@ -1,15 +1,18 @@
 package com.example.bookingbadminton.repository;
 
 import com.example.bookingbadminton.model.entity.Booking;
+import com.example.bookingbadminton.model.entity.Field;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.time.LocalDateTime;
 import java.util.List;
 
 public interface BookingRepository extends JpaRepository<Booking, UUID> {
+    Optional<Booking> findByIdAndField(UUID id, Field field);
     @Query("""
             SELECT bf.field.id, COUNT(bf) FROM BookingField bf
             WHERE bf.startHour >= :startOfDay AND bf.startHour < :endOfDay

@@ -31,7 +31,7 @@ public class FieldController {
     private final FieldService fieldService;
     private final FieldImageService fieldImageService;
 
-    //TODO API danh sách sân (trang chủ)
+    //TODO API danh sách sân (trang chủ) - PUBLIC
     @GetMapping
     public ApiResponse listFieldHomePage(@RequestParam(defaultValue = "0") int page,
                             @RequestParam(defaultValue = "10") int size,
@@ -41,25 +41,10 @@ public class FieldController {
         return ApiResponse.builder().result(PageResponse.from(result)).build();
     }
 
-    //TODO API chi tiết sân (trang chủ)
+    //TODO API chi tiết sân (trang chủ) - PUBLIC
     @GetMapping("/{id}/detail")
     public ApiResponse detailFieldHomePage(@PathVariable UUID id) {
         FieldUserDetailResponse detail = fieldService.userDetail(id);
-        return ApiResponse.builder().result(detail).build();
-    }
-
-    //TODO API chi tiết tình trạng sân
-    @GetMapping ("/{id:[0-9a-fA-F\\-]{36}}/bookings")
-    public ApiResponse ownerDailyBookings(@PathVariable UUID id,
-                                          @RequestParam LocalDate date) {
-        FieldOwnerDailyBookingResponse result = fieldService.ownerDailyBookings(id, date);
-        return ApiResponse.builder().result(result).build();
-    }
-
-    //TODO API owner chi tiết sân
-    @PostMapping("/{id:[0-9a-fA-F\\-]{36}}/owner")
-    public ApiResponse ownerDetail(@PathVariable UUID id, @RequestBody ValidOwnerRequest request) {
-        FieldOwnerDetailResponse detail = fieldService.ownerFieldDetail(request, id);
         return ApiResponse.builder().result(detail).build();
     }
 
@@ -70,33 +55,11 @@ public class FieldController {
         return ApiResponse.builder().result(fieldService.ownerUpdateField(id, request)).build();
     }
 
-
-
-
-//
-//    @GetMapping("/{id}")
-//    public ApiResponse get(@PathVariable UUID id) {
-//        return ApiResponse.builder().result(fieldService.get(id)).build();
-//    }
-
     @GetMapping("/{id}/quantity")
     public ApiResponse quantity(@PathVariable UUID id) {
         var field = fieldService.get(id);
         return ApiResponse.builder().result(new QuantityResponse(field.getQuantity())).build();
     }
-
-
-
-
-
-
-
-//    @PostMapping
-//    public ResponseEntity<ApiResponse> create(@RequestBody FieldRequest r) {
-//        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.builder()
-//                .result(fieldService.create(r))
-//                .build());
-//    }
 
     @PostMapping("/{id}/images")
     public ResponseEntity<ApiResponse> addImage(@PathVariable UUID id, @RequestBody FieldImageAddRequest request) {
@@ -118,11 +81,6 @@ public class FieldController {
     public ApiResponse listImages(@PathVariable UUID id) {
         return ApiResponse.builder().result(fieldImageService.listByField(id)).build();
     }
-
-//    @PutMapping("/{id}")
-//    public ApiResponse update(@PathVariable UUID id, @RequestBody FieldRequest request) {
-//        return ApiResponse.builder().result(fieldService.update(id, request)).build();
-//    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {

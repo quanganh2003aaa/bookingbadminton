@@ -1,6 +1,7 @@
 package com.example.bookingbadminton.repository;
 
 import com.example.bookingbadminton.model.entity.Field;
+import com.example.bookingbadminton.model.entity.Owner;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -8,10 +9,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface FieldRepository extends JpaRepository<Field, UUID> {
     Page<Field> findByNameContainingIgnoreCase(String name, Pageable pageable);
+
+    Optional<Field> findByIdAndOwner(UUID id, Owner owner);
 
     @Query("""
             SELECT f FROM Field f

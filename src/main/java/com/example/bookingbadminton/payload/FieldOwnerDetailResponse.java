@@ -16,6 +16,7 @@ public record FieldOwnerDetailResponse(
         LocalTime endTime,
         ActiveStatus active,
         String linkMap,
+        String imgQr,
         List<TimeSlotResponse> timeSlots
 ) {
     public record TimeSlotResponse(UUID id, LocalTime startHour, LocalTime endHour, Integer price) {}

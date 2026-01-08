@@ -1,18 +1,13 @@
 package com.example.bookingbadminton.service.impl;
 
 import com.example.bookingbadminton.model.Enum.BookingStatus;
-import com.example.bookingbadminton.model.entity.Booking;
-import com.example.bookingbadminton.model.entity.BookingField;
-import com.example.bookingbadminton.model.entity.Field;
-import com.example.bookingbadminton.model.entity.User;
+import com.example.bookingbadminton.model.Enum.InvoiceStatus;
+import com.example.bookingbadminton.model.entity.*;
 import com.example.bookingbadminton.payload.FieldOwnerDailyBookingResponse;
 import com.example.bookingbadminton.payload.TempBookingRequest;
 import com.example.bookingbadminton.payload.TempBookingResponse;
-import com.example.bookingbadminton.repository.BookingFieldRepository;
-import com.example.bookingbadminton.repository.BookingRepository;
-import com.example.bookingbadminton.repository.FieldRepository;
-import com.example.bookingbadminton.repository.TimeSlotRepository;
-import com.example.bookingbadminton.repository.UserRepository;
+import com.example.bookingbadminton.payload.request.ValidOwnerAndFieldRequest;
+import com.example.bookingbadminton.repository.*;
 import com.example.bookingbadminton.service.BookingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,12 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,28 +29,43 @@ public class BookingServiceImpl implements BookingService {
     private final UserRepository userRepository;
     private final BookingFieldRepository bookingFieldRepository;
     private final TimeSlotRepository timeSlotRepository;
+    private final OwnerRepository ownerRepository;
+    private final InvoiceRepository invoiceRepository;
 
     @Override
-    public List<Booking> findAll() {
-        return bookingRepository.findAll();
+    public void approveBooking(UUID bookingId, ValidOwnerAndFieldRequest request) {
+        Owner owner = ownerRepository.findById(request.ownerId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy chủ quản lý."));
+        Field field = fieldRepository.findByIdAndOwner(request.subFieldId(), owner)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sân không thuộc quyền quản lý."));
+        Booking booking = bookingRepository.findByIdAndField(bookingId, field)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Đơn đặt sân không xác định."));
+
+        booking.setStatus(BookingStatus.ACCEPT);
+        bookingRepository.save(booking);
+    }
+
+    @Override
+    public void rejectBooking(UUID bookingId, ValidOwnerAndFieldRequest request) {
+        Owner owner = ownerRepository.findById(request.ownerId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy chủ quản lý."));
+        Field field = fieldRepository.findByIdAndOwner(request.subFieldId(), owner)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sân không thuộc quyền quản lý."));
+        Booking booking = bookingRepository.findByIdAndField(bookingId, field)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Đơn đặt sân không xác định."));
+
+        booking.setStatus(BookingStatus.INACCEPT);
+        bookingRepository.save(booking);
+        Invoice invoice = invoiceRepository.findByBooking(booking)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invoice không xác định."));
+        invoice.setStatus(InvoiceStatus.REFUND);
+        invoiceRepository.save(invoice);
     }
 
     @Override
     public Booking get(UUID id) {
         return bookingRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found"));
-    }
-
-    @Override
-    public Booking create(UUID fieldId, UUID userId, String msisdn, Integer indexField, LocalDateTime startHour, LocalDateTime endHour, BookingStatus status) {
-        Booking booking = new Booking();
-        return saveBooking(booking, fieldId, userId, msisdn, indexField, startHour, endHour, status);
-    }
-
-    @Override
-    public Booking update(UUID id, UUID fieldId, UUID userId, String msisdn, Integer indexField, LocalDateTime startHour, LocalDateTime endHour, BookingStatus status) {
-        Booking booking = get(id);
-        return saveBooking(booking, fieldId, userId, msisdn, indexField, startHour, endHour, status);
     }
 
     private Booking saveBooking(Booking booking, UUID fieldId, UUID userId, String msisdn, Integer indexField, LocalDateTime startHour, LocalDateTime endHour, BookingStatus status) {
@@ -74,13 +79,6 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(status);
         syncBookingField(booking, field, startHour, endHour);
         return bookingRepository.save(booking);
-    }
-
-    @Override
-    public void delete(UUID id) {
-        Booking booking = get(id);
-        booking.setDeletedAt(LocalDateTime.now());
-        bookingRepository.save(booking);
     }
 
     private void syncBookingField(Booking booking, Field field, LocalDateTime startHour, LocalDateTime endHour) {

@@ -25,47 +25,6 @@ public class TimeSlotServiceImpl implements TimeSlotService {
 
     private final TimeSlotRepository timeSlotRepository;
     private final FieldRepository fieldRepository;
-
-    @Override
-    public List<TimeSlot> findAll() {
-        return timeSlotRepository.findAll();
-    }
-
-    @Override
-    public TimeSlot get(UUID id) {
-        return timeSlotRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy khung giờ!"));
-    }
-
-    @Override
-    public TimeSlot create(UUID fieldId, Integer price, LocalTime startHour, LocalTime endHour) {
-        TimeSlot slot = new TimeSlot();
-        return saveSlot(slot, fieldId, price, startHour, endHour);
-    }
-
-    @Override
-    public TimeSlot update(UUID id, UUID fieldId, Integer price, LocalTime startHour, LocalTime endHour) {
-        TimeSlot slot = get(id);
-        return saveSlot(slot, fieldId, price, startHour, endHour);
-    }
-
-    private TimeSlot saveSlot(TimeSlot slot, UUID fieldId, Integer price, LocalTime startHour, LocalTime endHour) {
-        Field field = fieldRepository.findById(fieldId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sân!"));
-        slot.setField(field);
-        slot.setPrice(price);
-        slot.setStartHour(startHour);
-        slot.setEndHour(endHour);
-        return timeSlotRepository.save(slot);
-    }
-
-    @Override
-    public void delete(UUID id) {
-        TimeSlot slot = get(id);
-        slot.setDeletedAt(LocalDateTime.now());
-        timeSlotRepository.save(slot);
-    }
-
     @Override
     public List<TimeSlotDTO> listByField(UUID fieldId) {
         return timeSlotRepository.findByField_IdOrderByStartHour(fieldId).stream().map(TimeSlotDTO::new).toList();
@@ -74,7 +33,7 @@ public class TimeSlotServiceImpl implements TimeSlotService {
     @Override
     public List<TimeSlotDTO> setSlots(UUID fieldId, List<TimeSlotItemRequest> slots) {
         Field field = fieldRepository.findById(fieldId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Field not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sân"));
         if (field.getStartTime() == null || field.getEndTime() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chưa thiết lập giờ hoạt động của sân");
         }
