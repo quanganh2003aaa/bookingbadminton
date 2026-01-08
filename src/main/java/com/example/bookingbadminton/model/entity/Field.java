@@ -60,12 +60,18 @@ public class Field extends BaseModel {
     private String linkMap;
 
     @OneToMany(mappedBy = "field", cascade = CascadeType.ALL)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private List<BookingField> bookingField;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Field parentField;
 
     @OneToMany(mappedBy = "parentField", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private List<Field> subFields;
 }

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
+@Repository
 public interface FieldImageRepository extends JpaRepository<FieldImage, UUID> {
     Optional<FieldImage> findFirstByField_Id(UUID fieldId);
     List<FieldImage> findByField_Id(UUID fieldId);
