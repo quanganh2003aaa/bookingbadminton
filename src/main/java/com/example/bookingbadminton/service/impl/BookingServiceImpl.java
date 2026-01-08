@@ -1,5 +1,6 @@
 package com.example.bookingbadminton.service.impl;
 
+import com.example.bookingbadminton.exception.ResourceNotFoundException;
 import com.example.bookingbadminton.model.Enum.BookingStatus;
 import com.example.bookingbadminton.model.Enum.InvoiceStatus;
 import com.example.bookingbadminton.model.entity.*;
@@ -157,16 +158,6 @@ public class BookingServiceImpl implements BookingService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sân cha!"));
 
         // Lọc sân con còn hiệu lực
-        List<Field> children = parent.getSubFields();
-        if (children == null || children.isEmpty()) {
-            children = List.of(parent);
-        }
-        children = children.stream()
-                .filter(f -> f.getDeletedAt() == null)
-                .collect(Collectors.toList());
-        Map<UUID, Field> childMap = children.stream()
-                .collect(Collectors.toMap(Field::getId, f -> f));
-
         User user = userRepository.findById(request.userId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng!"));
 
@@ -205,7 +196,7 @@ public class BookingServiceImpl implements BookingService {
         List<BookingField> links = new ArrayList<>();
 
         for (TempBookingRequest.TempBookingItem item : request.listBookingField()) {
-            Field sub = childMap.get(item.subFieldId());
+            Field sub = fieldRepository.findById(item.subFieldId()).orElseThrow(() -> new ResourceNotFoundException("Không tìm thâấy sân này"));
             if (sub == null) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sân con không thuộc sân cha hoặc đã bị xóa!");
             }
