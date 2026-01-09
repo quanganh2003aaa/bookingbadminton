@@ -32,6 +32,13 @@ public class Booking extends BaseModel {
     private List<BookingField> bookingField;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_field", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @JsonIgnoreProperties({"owner", "hibernateLazyInitializer", "handler", "parentField", "subFields", "bookingField"})
+    private Field field;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_user", nullable = true)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
