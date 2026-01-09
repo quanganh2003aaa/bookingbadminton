@@ -1,16 +1,11 @@
 package com.example.bookingbadminton.controller;
 
-import com.example.bookingbadminton.model.entity.User;
 import com.example.bookingbadminton.payload.ApiResponse;
-import com.example.bookingbadminton.payload.PageResponse;
 import com.example.bookingbadminton.payload.UserRequest;
-import com.example.bookingbadminton.payload.UserAdminResponse;
 import com.example.bookingbadminton.service.AuthenticationService;
 import com.example.bookingbadminton.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -27,7 +22,6 @@ public class UserController {
     public ApiResponse list() {
         return ApiResponse.builder().result(userService.findAll()).build();
     }
-
 
 
     @GetMapping("/{id}")
