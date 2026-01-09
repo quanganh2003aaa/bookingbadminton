@@ -75,6 +75,7 @@ public class BookingServiceImpl implements BookingService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         booking.setUser(user);
+        booking.setField(field);
         booking.setMsisdn(msisdn);
         booking.setStatus(status);
         syncBookingField(booking, field, startHour, endHour);
@@ -190,6 +191,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(BookingStatus.PENDING);
         booking.setUser(user);
         booking.setMsisdn(user.getAccount() != null ? user.getAccount().getMsisdn() : null);
+        booking.setField(parent);
 
         List<TempBookingResponse.TempBookingItem> items = new ArrayList<>();
         int total = 0;
@@ -254,8 +256,12 @@ public class BookingServiceImpl implements BookingService {
             ));
         }
 
-        booking.setBookingField(links);
-        bookingRepository.save(booking);
+        // Lưu booking trước để nhận id, sau đó lưu các BookingField gắn với booking đó
+        booking = bookingRepository.save(booking);
+        Booking finalBooking = booking;
+        links.forEach(link -> link.setBooking(finalBooking));
+        List<BookingField> persistedLinks = bookingFieldRepository.saveAll(links);
+        booking.setBookingField(persistedLinks);
 
         return new TempBookingResponse(
                 parent.getId(),
