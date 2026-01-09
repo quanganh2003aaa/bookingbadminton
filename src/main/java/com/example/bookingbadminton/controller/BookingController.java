@@ -13,8 +13,10 @@ import com.example.bookingbadminton.service.BookingService;
 import com.example.bookingbadminton.service.InvoiceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -53,6 +55,12 @@ public class BookingController {
         return ApiResponse.builder()
                 .result(bookingService.get(id))
                 .build();
+    }
+
+    @PostMapping(value = "/paying/{bookingId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse paying(@PathVariable String bookingId, @RequestPart("file") MultipartFile file) {
+        String result = bookingService.paying(UUID.fromString(bookingId), file);
+        return ApiResponse.builder().result(result).build();
     }
 
 

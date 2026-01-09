@@ -50,7 +50,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Booking not found"));
         invoice.setBooking(booking);
-        invoice.setPrice(price);
+//        invoice.setPrice(price);
         invoice.setStatus(status);
         if (status == InvoiceStatus.PAY) {
             booking.setStatus(BookingStatus.ACCEPT);

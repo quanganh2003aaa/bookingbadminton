@@ -1,0 +1,27 @@
+[
+  {
+    "gmail": "user1@gmail.com",
+    "msidn": "0901234567",
+    "password": "user1@gmail.com"
+  },
+  {
+    "gmail": "user2@gmail.com",
+    "msidn": "0901234567",
+    "password": "user2@gmail.com"
+  },
+  {
+    "gmail": "user3@gmail.com",
+    "msidn": "0901234567",
+    "password": "user3@gmail.com"
+  },
+  {
+    "gmail": "user4@gmail.com",
+    "msidn": "0901234567",
+    "password": "user4@gmail.com"
+  },
+  {
+    "gmail": "user5@gmail.com",
+    "msidn": "0901234567",
+    "password": "user5@gmail.com"
+  }
+]

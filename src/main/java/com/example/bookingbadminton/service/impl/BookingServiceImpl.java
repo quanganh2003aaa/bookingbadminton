@@ -10,10 +10,12 @@ import com.example.bookingbadminton.payload.TempBookingResponse;
 import com.example.bookingbadminton.payload.request.ValidOwnerAndFieldRequest;
 import com.example.bookingbadminton.repository.*;
 import com.example.bookingbadminton.service.BookingService;
+import com.example.bookingbadminton.util.UploadFileUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
@@ -32,6 +34,7 @@ public class BookingServiceImpl implements BookingService {
     private final TimeSlotRepository timeSlotRepository;
     private final OwnerRepository ownerRepository;
     private final InvoiceRepository invoiceRepository;
+    private final UploadFileUtil uploadFileUtil;
 
     @Override
     public void approveBooking(UUID bookingId, ValidOwnerAndFieldRequest request) {
@@ -268,7 +271,28 @@ public class BookingServiceImpl implements BookingService {
                 booking.getUser() != null ? booking.getUser().getId() : null,
                 BookingStatus.PENDING,
                 total,
-                items
+                items,
+                user.getName(),
+                user.getAccount().getMsisdn(),
+                parent.getName(),
+                parent.getAddress(),
+                parent.getImgQr(),
+                booking.getId()
         );
+    }
+
+    @Override
+    public String paying(UUID bookingId, MultipartFile file) {
+        Booking booking = bookingRepository.findById(bookingId).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin đặt sân"));
+
+        Invoice invoice = new Invoice();
+        invoice.setBooking(booking);
+        invoice.setStatus(InvoiceStatus.PAY);
+
+        String imgSecure = uploadFileUtil.uploadFile(file);
+        invoice.setImgPayment(imgSecure);
+        invoice.setPrice(booking.getTotalAmount());
+        invoiceRepository.save(invoice);
+        return "Thanh toán thành công";
     }
 }

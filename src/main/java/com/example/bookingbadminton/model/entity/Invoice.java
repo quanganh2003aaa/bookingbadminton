@@ -15,6 +15,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "invoice")
 @Data
@@ -27,7 +29,7 @@ public class Invoice extends BaseModel {
     @EqualsAndHashCode.Exclude
     private Booking booking;
 
-    private Integer price;
+    private BigDecimal price;
 
     private String imgPayment;
 

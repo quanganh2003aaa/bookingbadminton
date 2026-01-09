@@ -7,6 +7,7 @@ import com.example.bookingbadminton.payload.FieldOwnerDailyBookingResponse;
 import com.example.bookingbadminton.payload.TempBookingRequest;
 import com.example.bookingbadminton.payload.TempBookingResponse;
 import com.example.bookingbadminton.payload.request.ValidOwnerAndFieldRequest;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.time.LocalDate;
@@ -21,6 +22,8 @@ public interface BookingService {
     FieldOwnerDailyBookingResponse bookingsByDayForField(UUID fieldId, LocalDate date);
 
     TempBookingResponse createTempPendingBooking(TempBookingRequest request);
+
+    String paying(UUID bookingId, MultipartFile file);
 
 //    List<BookingByDayResponse> findByDay(java.time.LocalDate date);
 //
