@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: "jdbc:mysql://127.0.0.1:3306/bookingbadminton?createDatabaseIfNotExist=true"
+    url: "jdbc:mysql://127.0.0.1:3307/bookingbadminton?createDatabaseIfNotExist=true"
     username: root
-    password: 'Quankane1905@'
+    password: 'gungun2k3'
     driver-class-name: com.mysql.cj.jdbc.Driver
   security:
     oauth2:

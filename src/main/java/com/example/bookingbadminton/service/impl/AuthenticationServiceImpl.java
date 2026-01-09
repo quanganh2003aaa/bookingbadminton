@@ -69,51 +69,28 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final AuthMapper authMapper;
     private final OtpUtil otpUtil;
     private final RegisterOwnerRepository registerOwnerRepository;
+    private final OwnerRepository ownerRepository;
+    private final AdminRepository adminRepository;
     private ConcurrentHashMap<String, PendingRegistrationRequestDto> pendingRegistrationRequestMap = new ConcurrentHashMap<>();
     private Map<String, PendingResetPasswordRequestDto> pendingResetPasswordMap = new ConcurrentHashMap<>();
 
-//    @Override
-//    public List<Account> findAll() {
-//        return accountRepository.findAll();
-//    }
-//
-//    @Override
-//    public Account get(UUID id) {
-//        return accountRepository.findById(id)
-//                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
-//    }
-//
-//    @Override
-//    public Account create(CreateAccountRequest request) {
-//        if (accountRepository.existsByGmailIgnoreCase(request.gmail())) {
-//            throw new ResponseStatusException(HttpStatus.CONFLICT, "Gmail already exists");
-//        }
-//        Account account = new Account();
-//        account.setPassword(passwordEncoder.encode(request.password()));
-//        account.setGmail(request.gmail());
-//        account.setMsisdn(request.msisdn());
-//        return accountRepository.save(account);
-//    }
-//
-//    @Override
-//    public Account update(UUID id, Account account) {
-//        Account existing = get(id);
-//        existing.setPassword(passwordEncoder.encode(account.getPassword()));
-//        existing.setGmail(account.getGmail());
-//        existing.setMsisdn(account.getMsisdn());
-//        return accountRepository.save(existing);
-//    }
-//
-//    @Override
-//    public void delete(UUID id) {
-//        Account account = get(id);
-//        account.setDeletedAt(LocalDateTime.now());
-//        accountRepository.save(account);
-//    }
 
     @Override
     @Transactional
     public LoginResponseDto authentication(LoginRequestDto request) {
+        Account account = accountRepository.findByGmailIgnoreCase(request.getUsername())
+                .orElseThrow(() ->  new ResponseStatusException(HttpStatus.NOT_FOUND, "Thông tin tài khoản không chính xác."));
+        User user = userRepository.findByAccount(account)
+                .orElseGet(null);
+        Owner owner = ownerRepository.findByAccount(account)
+                .orElseGet(null);
+        Admin admin = adminRepository.findByAccount(account)
+                .orElseGet(null);
+
+        if (user == null && owner == null && admin == null){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Thông tin tài khoản không chính xác.");
+        }
+
         final String url = keycloakProperties.serverUrl() + "realms/" + keycloakProperties.realm() + "/protocol/openid-connect/token";
 
         HttpHeaders headers = new HttpHeaders();
