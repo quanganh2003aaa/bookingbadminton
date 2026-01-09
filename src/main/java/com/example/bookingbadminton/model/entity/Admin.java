@@ -7,16 +7,13 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 @Entity
 @Table(name = "admin")
 @Data
 @NoArgsConstructor
+@Builder
 @AllArgsConstructor
 public class Admin extends BaseModel {
     @OneToOne(fetch = FetchType.LAZY)

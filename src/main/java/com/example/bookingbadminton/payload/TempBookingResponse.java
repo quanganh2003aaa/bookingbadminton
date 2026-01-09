@@ -12,7 +12,13 @@ public record TempBookingResponse(
         UUID userId,
         BookingStatus status,
         Integer totalAmount,
-        List<TempBookingItem> bookings
+        List<TempBookingItem> bookings,
+        String username,
+        String msidn,
+        String nameField,
+        String addressField,
+        String imgQr,
+        UUID bookingId
 ) {
     public record TempBookingItem(
             UUID subFieldId,

@@ -8,9 +8,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Getter
 @Setter
 public class AdminInfoProperties {
-    String username;
+    String email;
     String password;
     String firstName;
-    String lastName;
-    String email;
+    String phone;
 }

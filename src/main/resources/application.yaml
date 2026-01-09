@@ -9,6 +9,8 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:9090/realms/bookingbadminton
+  application:
+    name: Bookingbadminton
   jpa:
     hibernate:
       ddl-auto: update
