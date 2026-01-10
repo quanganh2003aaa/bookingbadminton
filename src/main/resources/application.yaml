@@ -42,12 +42,13 @@ jwt:
 
 #KeyCloak
 keycloak:
-  serverUrl: ${KEYCLOAK_SERVERURL}
-  realm: ${KEYCLOAK_REALM}
-  clientId: ${KEYCLOAK_CLIENTID}
-  clientSecret: ${KEYCLOAK_CLIENTSECRET}
-  adminUser: ${KEYCLOAK_ADMINUSER}
-  adminPassword: ${KEYCLOAK_ADMINPASSWORD}
+  serverUrl: ${KEYCLOAK_SERVERURL:http://localhost:8180/}
+  realm: ${KEYCLOAK_REALM:bookingbadminton}
+  clientId: ${KEYCLOAK_CLIENTID:bookingbadminton}
+  clientSecret: ${KEYCLOAK_CLIENTSECRET:}
+  adminUser: ${KEYCLOAK_ADMINUSER:admin}
+  adminPassword: ${KEYCLOAK_ADMINPASSWORD:admin}
+  admin-event-secret: ${KEYCLOAK_ADMIN_EVENT_SECRET:change-me}
 
 #Rate Limiting
 rate-limit:

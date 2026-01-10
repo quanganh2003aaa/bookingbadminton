@@ -9,6 +9,7 @@ public record KeycloakProperties(
     String clientId,
     String clientSecret,
     String adminUser,
-    String adminPassword
+    String adminPassword,
+    String adminEventSecret
 ) {
 }

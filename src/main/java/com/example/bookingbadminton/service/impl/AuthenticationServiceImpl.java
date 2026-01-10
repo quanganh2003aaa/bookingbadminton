@@ -20,7 +20,6 @@ import com.example.bookingbadminton.model.dto.response.auth.AccountResponseDto;
 import com.example.bookingbadminton.model.dto.response.auth.LoginResponseDto;
 import com.example.bookingbadminton.model.dto.response.auth.RefreshTokenResponseDto;
 import com.example.bookingbadminton.model.entity.*;
-import com.example.bookingbadminton.payload.CreateAccountRequest;
 import com.example.bookingbadminton.payload.RegisterOwnerRequest;
 import com.example.bookingbadminton.payload.RegisterOwnerResponse;
 import com.example.bookingbadminton.payload.request.RegisterUserRequest;
@@ -200,7 +199,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         )));
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(user, headers);
-
+        String userId = null;
         try {
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
 
@@ -213,7 +212,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 throw new KeycloakException(ErrorMessage.Auth.ERR_CAN_NOT_CREATE_USER);
             }
 
-            String userId = keycloakUtil.getUserId(request.gmail());
+            userId = keycloakUtil.getUserId(request.gmail());
 
             String roleId;
 
@@ -235,6 +234,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         account.setGmail(request.gmail());
         account.setPassword(passwordEncoder.encode(request.password()));
         account.setMsisdn(request.mobileContact());
+        account.setKeycloakUserId(userId);
 
         accountRepository.save(account);
 
@@ -459,7 +459,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         )));
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(userK, headers);
-        String userId;
+        String userId = null;
         try {
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
 
@@ -471,6 +471,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 }
                 throw new KeycloakException(ErrorMessage.Auth.ERR_CAN_NOT_CREATE_USER);
             }
+
+            userId = keycloakUtil.getUserId(request.account().gmail());
 
             String roleId;
             userId = keycloakUtil.getUserId(request.account().gmail());
@@ -491,6 +493,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         account.setGmail(request.account().gmail());
         account.setPassword(passwordEncoder.encode(request.account().password()));
         account.setMsisdn(request.account().msisdn());
+        account.setKeycloakUserId(userId);
 
         accountRepository.save(account);
 

@@ -29,4 +29,7 @@ public class Account extends BaseModel {
 
     @Column(length = 10, nullable = false)
     private String msisdn;
+
+    @Column(name = "keycloak_user_id", length = 64, unique = true)
+    private String keycloakUserId;
 }
