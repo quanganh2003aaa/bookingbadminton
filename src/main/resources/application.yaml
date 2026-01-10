@@ -1,14 +1,14 @@
 spring:
   datasource:
-    url: "jdbc:mysql://127.0.0.1:3306/bookingbadminton?createDatabaseIfNotExist=true"
-    username: root
-    password: 'Quankane1905@'
+    url: "jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:bookingbadminton}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true"
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:Quankane1905@}
     driver-class-name: com.mysql.cj.jdbc.Driver
   security:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8180/realms/bookingbadminton
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:${KEYCLOAK_SERVERURL:http://localhost:8180/}realms/${KEYCLOAK_REALM:bookingbadminton}}
   application:
     name: Bookingbadminton
   jpa:
@@ -42,12 +42,13 @@ jwt:
 
 #KeyCloak
 keycloak:
-  serverUrl: ${KEYCLOAK_SERVERURL}
-  realm: ${KEYCLOAK_REALM}
-  clientId: ${KEYCLOAK_CLIENTID}
-  clientSecret: ${KEYCLOAK_CLIENTSECRET}
-  adminUser: ${KEYCLOAK_ADMINUSER}
-  adminPassword: ${KEYCLOAK_ADMINPASSWORD}
+  serverUrl: ${KEYCLOAK_SERVERURL:http://localhost:8180/}
+  realm: ${KEYCLOAK_REALM:bookingbadminton}
+  clientId: ${KEYCLOAK_CLIENTID:bookingbadminton}
+  clientSecret: ${KEYCLOAK_CLIENTSECRET:}
+  adminUser: ${KEYCLOAK_ADMINUSER:admin}
+  adminPassword: ${KEYCLOAK_ADMINPASSWORD:admin}
+  admin-event-secret: ${KEYCLOAK_ADMIN_EVENT_SECRET:change-me}
 
 #Rate Limiting
 rate-limit:
