@@ -277,7 +277,6 @@ public class FieldServiceImpl implements FieldService {
     @Override
     public FieldUserDetailResponse userDetail(UUID fieldId) {
         Field f = get(fieldId);
-        var avatar = ownerRepository.findById(f.getOwner().getId()).map(Owner::getAvatar).get();
         var comments = commentRepository.findByField_IdOrderByCreatedAtDesc(fieldId)
                 .stream()
                 .map(c -> new FieldUserDetailResponse.FieldCommentResponse(
@@ -300,7 +299,6 @@ public class FieldServiceImpl implements FieldService {
                 f.getName(),
                 f.getAddress(),
                 f.getMobileContact(),
-                avatar,
                 f.getStartTime(),
                 f.getEndTime(),
                 f.getActive(),

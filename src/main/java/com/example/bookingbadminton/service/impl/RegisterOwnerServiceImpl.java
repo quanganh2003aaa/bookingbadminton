@@ -24,6 +24,7 @@ import com.example.bookingbadminton.service.EmailService;
 import com.example.bookingbadminton.service.FieldImageService;
 import com.example.bookingbadminton.model.Enum.TypeImage;
 import com.example.bookingbadminton.service.RegisterOwnerService;
+import com.example.bookingbadminton.util.keycloak.KeycloakUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -50,6 +51,7 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
     private final FieldRepository fieldRepository;
     private final FieldImageService fieldImageService;
     private final EmailService emailService;
+    private final KeycloakUtil keycloakUtil;
     @Value("${file.upload-dir:uploads}")
     private String uploadBaseDir;
 
@@ -206,7 +208,9 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
 
         Account account = registerOwner.getAccount();
         Owner owner = ownerRepository.findByAccount_Id(account.getId()).orElseGet(() -> {
+            String userId = keycloakUtil.getUserId(registerOwner.getAccount().getGmail());
             Owner o = new Owner();
+            o.setId(UUID.fromString(userId));
             o.setAccount(account);
             o.setName(registerOwner.getName());
             o.setAvatar(null);
@@ -226,6 +230,7 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
         field.setLinkMap(registerOwner.getLinkMap());
         field.setIndexField(0);
         field.setQuantity(0);
+        field.setImgQr(registerOwner.getImgQr());
         Field savedField = fieldRepository.save(field);
         if (registerOwner.getImgQr() != null) {
             fieldImageService.create(savedField.getId(), TypeImage.QR, registerOwner.getImgQr());

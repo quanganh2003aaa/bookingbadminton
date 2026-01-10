@@ -11,7 +11,6 @@ public record FieldUserDetailResponse(
         String name,
         String address,
         String mobileContact,
-        String avatar,
         LocalTime startTime,
         LocalTime endTime,
         ActiveStatus active,

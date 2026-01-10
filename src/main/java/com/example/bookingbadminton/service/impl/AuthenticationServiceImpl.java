@@ -81,11 +81,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         Account account = accountRepository.findByGmailIgnoreCase(request.getUsername())
                 .orElseThrow(() ->  new ResponseStatusException(HttpStatus.NOT_FOUND, "Thông tin tài khoản không chính xác."));
         User user = userRepository.findByAccount(account)
-                .orElseGet(null);
+                .orElse(null);
         Owner owner = ownerRepository.findByAccount(account)
-                .orElseGet(null);
+                .orElse(null);
         Admin admin = adminRepository.findByAccount(account)
-                .orElseGet(null);
+                .orElse(null);
 
         if (user == null && owner == null && admin == null){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Thông tin tài khoản không chính xác.");
@@ -119,10 +119,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 List<String> realmRoles = (List<String>) claims.get("realm_access")
                         .asMap().get("roles");
 
+                String role = realmRoles.toString().contains("ADMIN") ? "ADMIN" : realmRoles.toString().contains("OWNER") ? "OWNER" : "USER";
+
                 return LoginResponseDto.builder()
                         .tokenType(CommonConstant.BEARER_TOKEN)
                         .userId(keycloakUtil.getUserId(request.getUsername()))
-                        .role(realmRoles.toString().contains("ADMIN") ? "ADMIN" : "USER")
+                        .role(role)
                         .accessToken(accessToken)
                         .refreshToken((String) body.get(REFRESH_TOKEN))
                         .build();
@@ -458,6 +460,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(userK, headers);
 
+        String userId = keycloakUtil.getUserId(request.account().gmail());
+
         try {
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
 
@@ -469,8 +473,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 }
                 throw new KeycloakException(ErrorMessage.Auth.ERR_CAN_NOT_CREATE_USER);
             }
-
-            String userId = keycloakUtil.getUserId(request.account().gmail());
 
             String roleId;
 
@@ -494,6 +496,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         accountRepository.save(account);
 
         User user = new User();
+        user.setId(UUID.fromString(userId));
         user.setAccount(account);
         user.setAvatar(Const.AVATAR_DEFAULT);
         user.setName(request.name());
