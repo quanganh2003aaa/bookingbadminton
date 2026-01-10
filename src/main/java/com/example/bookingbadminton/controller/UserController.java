@@ -1,7 +1,11 @@
 package com.example.bookingbadminton.controller;
 
 import com.example.bookingbadminton.payload.ApiResponse;
+import com.example.bookingbadminton.payload.DetailInfoOwnerResp;
+import com.example.bookingbadminton.payload.DetailInfoUserResp;
 import com.example.bookingbadminton.payload.UserRequest;
+import com.example.bookingbadminton.payload.request.ValidOwnerRequest;
+import com.example.bookingbadminton.payload.request.ValidUserRequest;
 import com.example.bookingbadminton.service.AuthenticationService;
 import com.example.bookingbadminton.service.UserService;
 import jakarta.validation.Valid;
@@ -16,35 +20,12 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService userService;
-    private final AuthenticationService authenticationService;
 
-    @GetMapping
-    public ApiResponse list() {
-        return ApiResponse.builder().result(userService.findAll()).build();
+    //TODO API thông tin tài khoản user
+    @PostMapping ("/detail-info")
+    public ApiResponse getInfoDetail(@RequestBody ValidUserRequest request) {
+        DetailInfoUserResp result = userService.getDetailInfoUser(request.userId());
+        return ApiResponse.builder().result(result).build();
     }
-
-
-    @GetMapping("/{id}")
-    public ApiResponse get(@PathVariable UUID id) {
-        return ApiResponse.builder().result(userService.get(id)).build();
-    }
-
-//    @PostMapping
-//    public ResponseEntity<ApiResponse> create(@RequestBody @Valid UserRequest request) {
-//        User saved = userService.create(request);
-//        return ResponseEntity.status(HttpStatus.CREATED)
-//                .body(ApiResponse.builder().result(saved).build());
-//    }
-
-    @PutMapping("/{id}")
-    public ApiResponse update(@PathVariable UUID id, @RequestBody @Valid UserRequest request) {
-        return ApiResponse.builder().result(userService.update(id, request)).build();
-    }
-
-//    @DeleteMapping("/{id}")
-//    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-//        accountService.delete(id);
-//        return ResponseEntity.noContent().build();
-//    }
 
 }

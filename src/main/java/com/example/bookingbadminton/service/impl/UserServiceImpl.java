@@ -1,7 +1,10 @@
 package com.example.bookingbadminton.service.impl;
 
 import com.example.bookingbadminton.model.entity.Account;
+import com.example.bookingbadminton.model.entity.Owner;
 import com.example.bookingbadminton.model.entity.User;
+import com.example.bookingbadminton.payload.DetailInfoOwnerResp;
+import com.example.bookingbadminton.payload.DetailInfoUserResp;
 import com.example.bookingbadminton.payload.UserAdminResponse;
 import com.example.bookingbadminton.payload.UserRequest;
 import com.example.bookingbadminton.payload.request.RegisterUserRequest;
@@ -30,20 +33,16 @@ public class UserServiceImpl implements UserService {
     private final AccountRepository accountRepository;
 
     @Override
-    public List<User> findAll() {
-        return userRepository.findAll();
-    }
+    public DetailInfoUserResp getDetailInfoUser(UUID ownerId) {
+        User user = userRepository.findById(ownerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy user"));
 
-    @Override
-    public User get(UUID id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng!"));
-    }
-
-
-    @Override
-    public User update(UUID id, UserRequest request) {
-        return saveUser(get(id), request);
+        return DetailInfoUserResp.builder()
+                .nameUser(user.getName())
+                .email(user.getAccount().getGmail())
+                .msisdn(user.getAccount().getMsisdn())
+                .avatar(user.getAvatar())
+                .build();
     }
 
     private User saveUser(User user, UserRequest request) {

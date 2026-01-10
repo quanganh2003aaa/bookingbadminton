@@ -45,7 +45,7 @@ public class OwnerServiceImpl implements OwnerService {
 
         return DetailInfoOwnerResp.builder()
                 .nameOwner(owner.getName())
-                .email(owner.getName())
+                .email(owner.getAccount().getGmail())
                 .msisdn(owner.getAccount().getMsisdn())
                 .avatar(owner.getAvatar())
                 .build();
