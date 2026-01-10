@@ -459,9 +459,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         )));
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(userK, headers);
-
-        String userId = keycloakUtil.getUserId(request.account().gmail());
-
+        String userId;
         try {
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
 
@@ -475,6 +473,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             }
 
             String roleId;
+            userId = keycloakUtil.getUserId(request.account().gmail());
 
             roleId = keycloakUtil.getRoleId("USER");
             keycloakUtil.assignRoleToUser(userId, roleId, "USER");
@@ -496,10 +495,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         accountRepository.save(account);
 
         User user = new User();
-        user.setId(UUID.fromString(userId));
         user.setAccount(account);
         user.setAvatar(Const.AVATAR_DEFAULT);
         user.setName(request.name());
+        userRepository.save(user);
+
+        user.setId(UUID.fromString(userId));
         userRepository.save(user);
 
         return UserResponseDto.builder().id(user.getId()).name(user.getName()).avatar(user.getAvatar()).build();

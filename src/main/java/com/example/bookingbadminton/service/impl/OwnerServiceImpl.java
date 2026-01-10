@@ -2,6 +2,7 @@ package com.example.bookingbadminton.service.impl;
 
 import com.example.bookingbadminton.model.entity.Account;
 import com.example.bookingbadminton.model.entity.Owner;
+import com.example.bookingbadminton.payload.DetailInfoOwnerResp;
 import com.example.bookingbadminton.payload.OwnerRequest;
 import com.example.bookingbadminton.payload.request.RegisterOwnerRequest;
 import com.example.bookingbadminton.repository.AccountRepository;
@@ -15,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static com.example.bookingbadminton.constant.Const.AVATAR_DEFAULT;
@@ -27,30 +29,6 @@ public class OwnerServiceImpl implements OwnerService {
     private final AccountRepository accountRepository;
     private final AuthenticationService authenticationService;
 
-    @Override
-    public List<Owner> findAll() {
-        return ownerRepository.findAll();
-    }
-
-    @Override
-    public Owner get(UUID id) {
-        return ownerRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found"));
-    }
-
-    @Override
-    public Owner create(RegisterOwnerRequest request) {
-//        Account saved = authenticationService.create(request.account());
-//        var ownerPayload = new OwnerRequest(saved.getId(), request.name(), AVATAR_DEFAULT);
-//        return saveOwner(new Owner(), ownerPayload);
-        return null;
-    }
-
-    @Override
-    public Owner update(UUID id, OwnerRequest request) {
-        return saveOwner(get(id), request);
-    }
-
     private Owner saveOwner(Owner owner, OwnerRequest request) {
         Account account = accountRepository.findById(request.accountId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
@@ -61,10 +39,15 @@ public class OwnerServiceImpl implements OwnerService {
     }
 
     @Override
-    public void delete(UUID id) {
-        if (!ownerRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found");
-        }
-        ownerRepository.deleteById(id);
+    public DetailInfoOwnerResp getDetailInfoOwner(UUID ownerId) {
+        Owner owner = ownerRepository.findById(ownerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy owner"));
+
+        return DetailInfoOwnerResp.builder()
+                .nameOwner(owner.getName())
+                .email(owner.getName())
+                .msisdn(owner.getAccount().getMsisdn())
+                .avatar(owner.getAvatar())
+                .build();
     }
 }

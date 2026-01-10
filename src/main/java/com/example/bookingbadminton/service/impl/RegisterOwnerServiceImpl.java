@@ -162,8 +162,6 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
         );
     }
 
-
-
     @Override
     public List<RegisterOwnerAdminResponse> adminList(RegisterStatus status, String search) {
         List<RegisterOwner> list = registerOwnerRepository.findByFilters(status, search);

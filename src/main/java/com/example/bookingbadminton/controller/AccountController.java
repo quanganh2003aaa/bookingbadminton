@@ -34,7 +34,7 @@ public class AccountController {
     public ResponseEntity<ResponseData<LoginResponseDto>> login(@RequestBody @Valid LoginRequestDto request) {
         return ResponseUtil.success(SuccessMessage.Auth.LOGIN_SUCCESS,
                 authenticationService.authentication(request)
-                );
+        );
     }
 
     //API khóa tài khoản người dùng

@@ -72,9 +72,12 @@ public class OwnerController {
         return ApiResponse.builder().message("Từ chối đơn đặt sân thành công.").build();
     }
 
-//    @GetMapping ("/info-detail/{id:[0-9a-fA-F\\-]{36}}")
-//    public ApiResponse getInfoDetail(@PathVariable UUID id) {
-//        FieldOwnerDailyBookingResponse result = ownerService.ownerDailyBookings(id, date);
-//        return ApiResponse.builder().result(result).build();
-//    }
+    //TODO API thông tin tài khoản owner
+    @PostMapping ("/detail-info")
+    public ApiResponse getInfoDetail(@RequestBody ValidOwnerRequest request) {
+        DetailInfoOwnerResp result = ownerService.getDetailInfoOwner(request.ownerId());
+        return ApiResponse.builder().result(result).build();
+    }
+
+
 }
