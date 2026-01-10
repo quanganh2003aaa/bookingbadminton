@@ -1,0 +1,26 @@
+[
+  {
+    "active": "ACTIVE",
+    "code": "242534",
+    "time": "2026-01-09 22:43:26.581776",
+    "total_day": "1",
+    "total_month": "1",
+    "type": "REGISTER_OWNER_CODE"
+  },
+  {
+    "active": "228409",
+    "code": "242534",
+    "time": "2026-01-09 22:33:34.386050",
+    "total_day": "1",
+    "total_month": "1",
+    "type": "REGISTER_OWNER_CODE"
+  },
+  {
+    "active": "INACTIVE",
+    "code": "242534",
+    "time": "2026-01-09 00:52:40.536723",
+    "total_day": "1",
+    "total_month": "1",
+    "type": "REGISTER_OWNER_CODE"
+  }
+]
