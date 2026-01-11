@@ -5,6 +5,7 @@ import com.example.bookingbadminton.model.entity.Account;
 import com.example.bookingbadminton.model.entity.User;
 import com.example.bookingbadminton.repository.UserRepository;
 import com.example.bookingbadminton.repository.AccountRepository;
+import com.example.bookingbadminton.util.keycloak.KeycloakUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,7 @@ public class KeycloakAdminEventService {
     private final AccountRepository accountRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final KeycloakUtil keycloakUtil;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Transactional
@@ -155,5 +157,28 @@ public class KeycloakAdminEventService {
             }
         }
         return new java.util.HashMap<>();
+    }
+
+    public void syncPassword(String keycloakUserId, String newPassword) {
+        if (!StringUtils.hasText(keycloakUserId) || !StringUtils.hasText(newPassword)) {
+            log.warn("syncPassword missing keycloakUserId or newPassword");
+            return;
+        }
+        var accountOpt = accountRepository.findByKeycloakUserId(keycloakUserId);
+        if (accountOpt.isEmpty()) {
+            log.warn("syncPassword: No account found for keycloakUserId={}", keycloakUserId);
+            return;
+        }
+
+        boolean kcOk = keycloakUtil.resetPassword(keycloakUserId, newPassword);
+        if (!kcOk) {
+            log.error("syncPassword: failed to update password in Keycloak for user {}", keycloakUserId);
+            return;
+        }
+
+        Account account = accountOpt.get();
+        account.setPassword(passwordEncoder.encode(newPassword));
+        accountRepository.save(account);
+        log.info("syncPassword: updated password for account {}", account.getId());
     }
 }
