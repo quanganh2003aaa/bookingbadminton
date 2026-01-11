@@ -90,6 +90,15 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Thông tin tài khoản không chính xác.");
         }
 
+        UUID accountId;
+        if (user != null){
+            accountId = user.getId();
+        } else if (owner != null){
+            accountId = owner.getId();
+        } else {
+            accountId = admin.getId();
+        }
+
         final String url = keycloakProperties.serverUrl() + "realms/" + keycloakProperties.realm() + "/protocol/openid-connect/token";
 
         HttpHeaders headers = new HttpHeaders();
@@ -122,7 +131,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
                 return LoginResponseDto.builder()
                         .tokenType(CommonConstant.BEARER_TOKEN)
-                        .userId(keycloakUtil.getUserId(request.getUsername()))
+                        .userId(String.valueOf(accountId))
+                        .keycloakUserId(keycloakUtil.getUserId(request.getUsername()))
                         .role(role)
                         .accessToken(accessToken)
                         .refreshToken((String) body.get(REFRESH_TOKEN))
@@ -501,9 +511,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         user.setAccount(account);
         user.setAvatar(Const.AVATAR_DEFAULT);
         user.setName(request.name());
-        userRepository.save(user);
-
-        user.setId(UUID.fromString(userId));
         userRepository.save(user);
 
         return UserResponseDto.builder().id(user.getId()).name(user.getName()).avatar(user.getAvatar()).build();

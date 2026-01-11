@@ -4,12 +4,15 @@ import com.example.bookingbadminton.model.Enum.BookingStatus;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
 public record FieldOwnerDailyBookingResponse(
         UUID fieldId,
         String fieldName,
+        LocalTime startTime,
+        LocalTime endTime,
         LocalDate date,
         List<SubFieldBooking> subFields
 ) {

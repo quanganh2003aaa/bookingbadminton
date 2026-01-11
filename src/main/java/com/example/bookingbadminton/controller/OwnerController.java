@@ -10,7 +10,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -58,7 +64,14 @@ public class OwnerController {
         return ApiResponse.builder().result(result).build();
     }
 
-    //TODO API chấp thuận đơn đặt sân
+    //TODO Danh sách booking của sân cha (gộp booking_field, bỏ pending quá 5p)
+    @GetMapping("/field-booking/{id:[0-9a-fA-F\\-]{36}}/list-booking")
+    public ApiResponse ownerListBookings(@PathVariable UUID id,
+                                         @RequestParam LocalDate date) {
+        return ApiResponse.builder().result(bookingService.ownerListBookings(id, date)).build();
+    }
+
+    // Chấp thuận đơn đặt sân
     @PostMapping("/approve-booking/{id}")
     public ApiResponse approveBooking(@PathVariable UUID id, @RequestBody ValidOwnerAndFieldRequest request) {
         bookingService.approveBooking(id, request);
@@ -78,6 +91,4 @@ public class OwnerController {
         DetailInfoOwnerResp result = ownerService.getDetailInfoOwner(request.ownerId());
         return ApiResponse.builder().result(result).build();
     }
-
-
 }

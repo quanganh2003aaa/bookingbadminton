@@ -1,6 +1,7 @@
 package com.example.bookingbadminton.service.impl;
 
 import com.example.bookingbadminton.model.Enum.ActiveStatus;
+import com.example.bookingbadminton.model.Enum.BookingStatus;
 import com.example.bookingbadminton.model.entity.Field;
 import com.example.bookingbadminton.model.entity.FieldImage;
 import com.example.bookingbadminton.model.entity.Owner;
@@ -231,30 +232,38 @@ public class FieldServiceImpl implements FieldService {
     @Override
     public FieldOwnerDailyBookingResponse ownerDailyBookings(UUID fieldId, LocalDate date) {
         Field parent = get(fieldId);
-        if (parent.getParentField() != null) {
-            parent = parent.getParentField();
-        }
+        if (parent.getParentField() != null) parent = parent.getParentField();
 
         var startOfDay = date.atStartOfDay();
         var endOfDay = date.plusDays(1).atStartOfDay();
         var bookings = bookingFieldRepository.findByParentFieldAndDay(parent.getId(), startOfDay, endOfDay);
 
+        LocalDateTime now = LocalDateTime.now();
         Map<UUID, List<FieldOwnerDailyBookingResponse.BookingSlot>> slotsByField = new HashMap<>();
         for (var bf : bookings) {
+            var booking = bf.getBooking();
+            // bỏ các bản ghi đã xoá
+            if (booking != null && booking.getDeletedAt() != null) continue;
+            // bỏ pending quá 5 phút
+            if (booking != null
+                    && BookingStatus.PENDING.equals(booking.getStatus())
+                    && booking.getCreatedAt() != null
+                    && booking.getCreatedAt().isBefore(now.minusMinutes(5))) {
+                continue;
+            }
             var slot = new FieldOwnerDailyBookingResponse.BookingSlot(
-                    bf.getBooking() != null ? bf.getBooking().getId() : null,
+                    booking != null ? booking.getId() : null,
                     bf.getStartHour(),
                     bf.getEndHour(),
-                    bf.getBooking() != null ? bf.getBooking().getStatus() : null
+                    booking != null ? booking.getStatus() : null
             );
             slotsByField.computeIfAbsent(bf.getField().getId(), k -> new ArrayList<>()).add(slot);
         }
 
         List<Field> children = parent.getSubFields();
-        if (children == null || children.isEmpty()) {
-            children = List.of(parent);
-        }
+        if (children == null || children.isEmpty()) children = List.of(parent);
         children = children.stream()
+                .filter(f -> f.getDeletedAt() == null) // tuỳ chọn, nếu muốn bỏ sân con đã xoá
                 .sorted(Comparator.comparing(f -> f.getIndexField() == null ? Integer.MAX_VALUE : f.getIndexField()))
                 .toList();
 
@@ -266,12 +275,7 @@ public class FieldServiceImpl implements FieldService {
                 ))
                 .toList();
 
-        return new FieldOwnerDailyBookingResponse(
-                parent.getId(),
-                parent.getName(),
-                date,
-                subFieldBookings
-        );
+        return new FieldOwnerDailyBookingResponse(parent.getId(), parent.getName(), parent.getStartTime(), parent.getEndTime(), date, subFieldBookings);
     }
 
     @Override

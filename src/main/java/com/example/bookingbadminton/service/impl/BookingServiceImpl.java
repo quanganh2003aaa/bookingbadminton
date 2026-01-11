@@ -4,9 +4,7 @@ import com.example.bookingbadminton.exception.ResourceNotFoundException;
 import com.example.bookingbadminton.model.Enum.BookingStatus;
 import com.example.bookingbadminton.model.Enum.InvoiceStatus;
 import com.example.bookingbadminton.model.entity.*;
-import com.example.bookingbadminton.payload.FieldOwnerDailyBookingResponse;
-import com.example.bookingbadminton.payload.TempBookingRequest;
-import com.example.bookingbadminton.payload.TempBookingResponse;
+import com.example.bookingbadminton.payload.*;
 import com.example.bookingbadminton.payload.request.ValidOwnerAndFieldRequest;
 import com.example.bookingbadminton.repository.*;
 import com.example.bookingbadminton.service.BookingService;
@@ -18,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -150,6 +149,8 @@ public class BookingServiceImpl implements BookingService {
         return new FieldOwnerDailyBookingResponse(
                 parent.getId(),
                 parent.getName(),
+                parent.getStartTime(),
+                parent.getEndTime(),
                 date,
                 subFields
         );
@@ -195,6 +196,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setUser(user);
         booking.setMsisdn(user.getAccount() != null ? user.getAccount().getMsisdn() : null);
         booking.setField(parent);
+
 
         List<TempBookingResponse.TempBookingItem> items = new ArrayList<>();
         int total = 0;
@@ -260,6 +262,7 @@ public class BookingServiceImpl implements BookingService {
         }
 
         // Lưu booking trước để nhận id, sau đó lưu các BookingField gắn với booking đó
+        booking.setTotalAmount(BigDecimal.valueOf(total));
         booking = bookingRepository.save(booking);
         Booking finalBooking = booking;
         links.forEach(link -> link.setBooking(finalBooking));
@@ -285,6 +288,7 @@ public class BookingServiceImpl implements BookingService {
     public String paying(UUID bookingId, MultipartFile file) {
         Booking booking = bookingRepository.findById(bookingId).orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy thông tin đặt sân"));
 
+        booking.setStatus(BookingStatus.COMFIRM);
         Invoice invoice = new Invoice();
         invoice.setBooking(booking);
         invoice.setStatus(InvoiceStatus.PAY);
@@ -293,6 +297,88 @@ public class BookingServiceImpl implements BookingService {
         invoice.setImgPayment(imgSecure);
         invoice.setPrice(booking.getTotalAmount());
         invoiceRepository.save(invoice);
+        bookingRepository.save(booking);
         return "Thanh toán thành công";
     }
+
+
+    @Override
+    public List<FieldOwnerBookingListResponse> ownerListBookings(UUID parentFieldId, LocalDate date) {
+        Field parent = fieldRepository.findById(parentFieldId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kh?ng t?m th?y s?n!"));
+        if (parent.getParentField() != null) {
+            parent = parent.getParentField();
+        }
+        LocalDateTime now = LocalDateTime.now();
+        var startOfDay = date.atStartOfDay();
+        var endOfDay = date.plusDays(1).atStartOfDay();
+        List<BookingField> bookingFields = bookingFieldRepository.findByParentFieldAndDay(parent.getId(), startOfDay, endOfDay);
+
+        Map<UUID, List<BookingField>> byBooking = bookingFields.stream()
+                .filter(bf -> bf.getField() == null || bf.getField().getDeletedAt() == null)
+                .filter(bf -> bf.getBooking() != null)
+                .filter(bf -> bf.getBooking().getDeletedAt() == null)
+                .collect(Collectors.groupingBy(bf -> bf.getBooking().getId()));
+
+        List<FieldOwnerBookingListResponse> responses = new ArrayList<>();
+        for (Map.Entry<UUID, List<BookingField>> entry : byBooking.entrySet()) {
+            Booking booking = entry.getValue().get(0).getBooking();
+            if (BookingStatus.PENDING.equals(booking.getStatus())
+                    && booking.getCreatedAt() != null
+                    && booking.getCreatedAt().isBefore(now.minusMinutes(5))) {
+                continue;
+            }
+            Invoice invoice = invoiceRepository.findByBooking(booking).orElse(null);
+            BookingField anyField = entry.getValue().get(0);
+
+            responses.add(new FieldOwnerBookingListResponse(
+                    booking.getId(),
+                    anyField.getField() != null ? anyField.getField().getId() : null,
+                    booking.getUser() != null ? booking.getUser().getName() : null,
+                    booking.getMsisdn(),
+                    booking.getStatus(),
+                    booking.getCreatedAt(),
+                    invoice != null ? invoice.getStatus() : null
+            ));
+        }
+
+        responses.sort(Comparator.comparing(FieldOwnerBookingListResponse::createdAt,
+                Comparator.nullsLast(LocalDateTime::compareTo)).reversed());
+        return responses;
+    }
+
+    @Override
+    public PaidBookingDetailResponse paidBookingDetail(UUID bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn đặt sân!"));
+        Invoice invoice = invoiceRepository.findByBooking(booking)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy hóa đơn!"));
+        if (!InvoiceStatus.PAY.equals(invoice.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn này chưa thanh toán hoặc không ở trạng thái PAY.");
+        }
+
+        List<PaidBookingDetailResponse.BookingSlot> slots = booking.getBookingField() == null ? List.of() :
+                booking.getBookingField().stream()
+                        .filter(bf -> bf.getField() == null || bf.getField().getDeletedAt() == null)
+                        .map(bf -> new PaidBookingDetailResponse.BookingSlot(
+                                bf.getField() != null ? bf.getField().getId() : null,
+                                bf.getField().getIndexField(),
+                                bf.getStartHour(),
+                                bf.getEndHour()
+                        ))
+                        .toList();
+
+        return new PaidBookingDetailResponse(
+                booking.getId(),
+                booking.getUser() != null ? booking.getUser().getName() : null,
+                booking.getMsisdn(),
+                booking.getStatus(),
+                invoice.getStatus(),
+                booking.getCreatedAt(),
+                invoice.getPrice(),
+                invoice.getImgPayment(),
+                slots
+        );
+    }
+
 }

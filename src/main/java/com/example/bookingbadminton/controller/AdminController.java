@@ -56,7 +56,7 @@ public class AdminController {
                 .build();
     }
 
-    //API admin chấp thuận đơn đăng ký quản lý
+    //TODO API admin chấp thuận đơn đăng ký quản lý
     @PostMapping("/{id}/approve")
     public ApiResponse approve(@PathVariable UUID id) {
         return ApiResponse.builder().result(registerOwnerService.approve(id)).build();

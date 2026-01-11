@@ -206,9 +206,7 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
 
         Account account = registerOwner.getAccount();
         Owner owner = ownerRepository.findByAccount_Id(account.getId()).orElseGet(() -> {
-            String userId = keycloakUtil.getUserId(registerOwner.getAccount().getGmail());
             Owner o = new Owner();
-            o.setId(UUID.fromString(userId));
             o.setAccount(account);
             o.setName(registerOwner.getName());
             o.setAvatar(null);

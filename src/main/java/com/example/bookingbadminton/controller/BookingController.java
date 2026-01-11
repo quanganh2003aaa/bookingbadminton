@@ -57,6 +57,13 @@ public class BookingController {
                 .build();
     }
 
+    @GetMapping("/{id}/pay-detail")
+    public ApiResponse paidDetail(@PathVariable UUID id) {
+        return ApiResponse.builder()
+                .result(bookingService.paidBookingDetail(id))
+                .build();
+    }
+
     @PostMapping(value = "/paying/{bookingId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse paying(@PathVariable String bookingId, @RequestPart("file") MultipartFile file) {
         String result = bookingService.paying(UUID.fromString(bookingId), file);

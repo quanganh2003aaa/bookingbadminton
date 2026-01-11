@@ -21,4 +21,11 @@ public interface BookingFieldRepository extends JpaRepository<BookingField, Long
     List<BookingField> findByParentFieldAndDay(@Param("parentId") UUID parentId,
                                                @Param("startOfDay") LocalDateTime startOfDay,
                                                @Param("endOfDay") LocalDateTime endOfDay);
+
+    @Query("""
+            SELECT bf FROM BookingField bf
+            JOIN bf.field f
+            WHERE (f.id = :parentId OR f.parentField.id = :parentId)
+            """)
+    List<BookingField> findByParentField(@Param("parentId") UUID parentId);
 }

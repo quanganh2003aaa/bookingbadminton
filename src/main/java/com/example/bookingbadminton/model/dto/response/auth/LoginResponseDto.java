@@ -13,6 +13,8 @@ public class LoginResponseDto {
 
     String tokenType;
 
+    String keycloakUserId;
+
     String userId;
 
     String role;

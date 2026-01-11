@@ -37,6 +37,7 @@ public interface FieldRepository extends JpaRepository<Field, UUID> {
     @Query("""
             SELECT f FROM Field f
             WHERE (:search IS NULL OR :search = '' OR LOWER(f.name) LIKE LOWER(CONCAT('%', :search, '%')))
+                AND f.parentField IS NULL
               AND (:active IS NULL OR f.active = :active)
             """)
     Page<Field> findByFiltersForUser(@Param("search") String search,

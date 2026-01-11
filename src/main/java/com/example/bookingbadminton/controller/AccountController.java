@@ -29,14 +29,6 @@ public class AccountController {
     private final OwnerService ownerService;
     private final AuthenticationService authenticationService;
 
-    //API đăng nhập user
-    @PostMapping("/login")
-    public ResponseEntity<ResponseData<LoginResponseDto>> login(@RequestBody @Valid LoginRequestDto request) {
-        return ResponseUtil.success(SuccessMessage.Auth.LOGIN_SUCCESS,
-                authenticationService.authentication(request)
-        );
-    }
-
     //API khóa tài khoản người dùng
     @PostMapping("/{id}/lock")
     public ApiResponse lock(@PathVariable UUID id) {
