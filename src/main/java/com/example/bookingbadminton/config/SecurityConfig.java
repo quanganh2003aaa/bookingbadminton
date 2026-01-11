@@ -54,7 +54,6 @@ public class SecurityConfig {
                                 .requestMatchers("/api/accounts/login/owner").permitAll()
                                 .requestMatchers("/api/accounts/**/unlock").hasAnyAuthority(RoleConstant.ADMIN)
                                 .requestMatchers("/api/accounts/**/lock").hasAnyAuthority(RoleConstant.ADMIN)
-                                .requestMatchers("/api/accounts/**/lock").hasAnyAuthority(RoleConstant.ADMIN)
                                 .requestMatchers("/api/fields/**").permitAll()
                                 .requestMatchers("/api/bookings/**").permitAll()
                                 .requestMatchers("/api/time-slots/**").permitAll()
