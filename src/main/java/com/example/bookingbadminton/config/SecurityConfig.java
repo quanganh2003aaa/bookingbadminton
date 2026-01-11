@@ -52,8 +52,9 @@ public class SecurityConfig {
                         authorizationManagerRequestMatcherRegistry -> authorizationManagerRequestMatcherRegistry
                                 .requestMatchers("/api/passcodes/register-owner").permitAll()
                                 .requestMatchers("/api/accounts/login/owner").permitAll()
-                                .requestMatchers("/api/accounts/**/unlock").hasAnyAuthority(RoleConstant.ADMIN)
-                                .requestMatchers("/api/accounts/**/lock").hasAnyAuthority(RoleConstant.ADMIN)
+                                // match account lock/unlock endpoints with a single path segment for ID
+                                .requestMatchers("/api/accounts/{id}/unlock").hasAnyAuthority(RoleConstant.ADMIN)
+                                .requestMatchers("/api/accounts/{id}/lock").hasAnyAuthority(RoleConstant.ADMIN)
                                 .requestMatchers("/api/fields/**").permitAll()
                                 .requestMatchers("/api/bookings/**").permitAll()
                                 .requestMatchers("/api/time-slots/**").permitAll()

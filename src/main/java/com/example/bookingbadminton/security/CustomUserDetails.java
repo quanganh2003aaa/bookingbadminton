@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 @RequiredArgsConstructor
 @Getter
@@ -22,9 +23,13 @@ public class CustomUserDetails implements UserDetails {
 
     transient User user;
     transient Account account;
+    transient Set<String> roles;
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("USER"));
+        if (roles == null || roles.isEmpty()) {
+            return List.of(new SimpleGrantedAuthority("USER"));
+        }
+        return roles.stream().map(SimpleGrantedAuthority::new).toList();
     }
 
     @Override

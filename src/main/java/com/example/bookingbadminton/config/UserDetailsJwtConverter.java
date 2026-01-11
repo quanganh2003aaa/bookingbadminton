@@ -37,6 +37,10 @@ public class UserDetailsJwtConverter implements Converter<Jwt, AbstractAuthentic
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
         Collection<? extends GrantedAuthority> authorities = extractAuthorities(jwt);
+        // Merge DB-derived authorities (if any) when token does not provide roles
+        if (authorities == null || authorities.isEmpty()) {
+            authorities = userDetails.getAuthorities();
+        }
 
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                 userDetails,
