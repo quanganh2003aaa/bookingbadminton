@@ -415,7 +415,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public RefreshTokenResponseDto refresh(RefreshTokenRequestDto request) {
-        final String url = keycloakProperties.serverUrl() + "/realms/" + keycloakProperties.realm() + "/protocol/openid-connect/token";
+        final String url = keycloakProperties.serverUrl() + "realms/" + keycloakProperties.realm() + "/protocol/openid-connect/token";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
