@@ -91,12 +91,20 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
 
         UUID accountId;
+        String name;
+        String msisdn;
         if (user != null) {
             accountId = user.getId();
+            name = user.getName();
+            msisdn = user.getAccount().getMsisdn();
         } else if (owner != null) {
             accountId = owner.getId();
+            name = owner.getName();
+            msisdn = owner.getAccount().getMsisdn();
         } else {
             accountId = admin.getId();
+            name = admin.getName();
+            msisdn = admin.getAccount().getMsisdn();
         }
 
         final String url = keycloakProperties.serverUrl() + "realms/" + keycloakProperties.realm() + "/protocol/openid-connect/token";
@@ -136,6 +144,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         .role(role)
                         .accessToken(accessToken)
                         .refreshToken((String) body.get(REFRESH_TOKEN))
+                        .name(name)
+                        .msisdn(msisdn)
                         .build();
             } else {
                 log.error("Đăng nhập thất bại với username = {}", request.getUsername());

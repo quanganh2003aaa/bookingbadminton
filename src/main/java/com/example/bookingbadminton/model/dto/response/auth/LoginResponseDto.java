@@ -22,4 +22,8 @@ public class LoginResponseDto {
     String accessToken;
 
     String refreshToken;
+
+    String name;
+
+    String msisdn;
 }

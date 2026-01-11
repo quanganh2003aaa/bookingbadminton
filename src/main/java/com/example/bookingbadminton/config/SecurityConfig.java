@@ -58,6 +58,7 @@ public class SecurityConfig {
                                 .requestMatchers("/api/fields/**").permitAll()
                                 .requestMatchers("/api/bookings/**").permitAll()
                                 .requestMatchers("/api/time-slots/**").permitAll()
+                                .requestMatchers("/api/owner/field-booking/{id}").permitAll()
                                 .requestMatchers(userEndpoints).hasAnyAuthority(RoleConstant.USER, RoleConstant.ADMIN, RoleConstant.OWNER)
                                 .requestMatchers(adminEndpoints).hasAnyAuthority(RoleConstant.ADMIN)
                                 .requestMatchers(ownerEndpoints).hasAnyAuthority(RoleConstant.OWNER)

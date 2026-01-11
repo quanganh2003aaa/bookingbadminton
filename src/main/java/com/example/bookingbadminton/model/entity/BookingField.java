@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity(name = "BookingField")
 @Table(name = "booking_field")
@@ -12,9 +13,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class BookingField {
     @Id
-    @GeneratedValue(generator = "uuid2")
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", insertable = false, updatable = false, nullable = false, columnDefinition = "CHAR(36)")
-    private Long id;
+    private String id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "field_id", nullable = false)
