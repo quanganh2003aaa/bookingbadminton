@@ -14,8 +14,6 @@ import java.util.Optional;
 import java.util.UUID;
 @Repository
 public interface FieldRepository extends JpaRepository<Field, UUID> {
-    Page<Field> findByNameContainingIgnoreCase(String name, Pageable pageable);
-
     Optional<Field> findByIdAndOwner(UUID id, Owner owner);
 
     @Query("""
@@ -27,8 +25,6 @@ public interface FieldRepository extends JpaRepository<Field, UUID> {
                    LOWER(a.gmail) LIKE LOWER(CONCAT('%', :search, '%')))
             """)
     Page<Field> findByFilters(@Param("search") String search, Pageable pageable);
-
-    Page<Field> findByOwner_Id(UUID ownerId, Pageable pageable);
 
     Page<Field> findByOwner_IdAndParentFieldIsNull(UUID ownerId, Pageable pageable);
 

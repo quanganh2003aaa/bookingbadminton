@@ -1,6 +1,5 @@
 package com.example.bookingbadminton.service;
 
-import com.example.bookingbadminton.model.Enum.BookingStatus;
 import com.example.bookingbadminton.model.entity.Booking;
 import com.example.bookingbadminton.payload.FieldOwnerBookingListResponse;
 import com.example.bookingbadminton.payload.FieldOwnerDailyBookingResponse;
@@ -21,7 +20,6 @@ public interface BookingService {
     void approveBooking(UUID bookingId, ValidOwnerAndFieldRequest request);
     void rejectBooking(UUID bookingId, ValidOwnerAndFieldRequest request);
     Booking get(UUID id);
-
     FieldOwnerDailyBookingResponse bookingsByDayForField(UUID fieldId, LocalDate date);
 
     TempBookingResponse createTempPendingBooking(TempBookingRequest request);
@@ -35,8 +33,4 @@ public interface BookingService {
     List<UserBookingSummaryResponse> userBookings(UUID userId);
 
     UserBookingDetailResponse userBookingDetail(UUID bookingId);
-
-//    List<BookingByDayResponse> findByDay(java.time.LocalDate date);
-//
-//    List<BookingByDayResponse> findByDayAndField(java.time.LocalDate date, UUID fieldId);
 }

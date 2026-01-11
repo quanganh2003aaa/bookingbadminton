@@ -2,42 +2,23 @@ package com.example.bookingbadminton.service.impl;
 
 import com.example.bookingbadminton.model.Enum.ActiveStatus;
 import com.example.bookingbadminton.model.Enum.RegisterStatus;
-import com.example.bookingbadminton.model.Enum.TypePasscode;
 import com.example.bookingbadminton.model.entity.Account;
 import com.example.bookingbadminton.model.entity.Field;
 import com.example.bookingbadminton.model.entity.Owner;
-import com.example.bookingbadminton.model.entity.Passcode;
 import com.example.bookingbadminton.model.entity.RegisterOwner;
 import com.example.bookingbadminton.payload.RegisterOwnerAdminResponse;
-import com.example.bookingbadminton.payload.RegisterOwnerConfirmRequest;
-import com.example.bookingbadminton.payload.RegisterOwnerDraft;
-import com.example.bookingbadminton.payload.RegisterOwnerRequest;
-import com.example.bookingbadminton.payload.RegisterOwnerResponse;
 import com.example.bookingbadminton.payload.RegisterOwnerDetailResponse;
 import com.example.bookingbadminton.payload.RegisterOwnerRejectResponse;
-import com.example.bookingbadminton.repository.AccountRepository;
 import com.example.bookingbadminton.repository.FieldRepository;
 import com.example.bookingbadminton.repository.OwnerRepository;
-import com.example.bookingbadminton.repository.PasscodeRepository;
 import com.example.bookingbadminton.repository.RegisterOwnerRepository;
-import com.example.bookingbadminton.service.EmailService;
-import com.example.bookingbadminton.service.FieldImageService;
-import com.example.bookingbadminton.model.Enum.TypeImage;
 import com.example.bookingbadminton.service.RegisterOwnerService;
-import com.example.bookingbadminton.util.keycloak.KeycloakUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.LocalDateTime;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.Base64;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -45,121 +26,13 @@ import java.util.UUID;
 public class RegisterOwnerServiceImpl implements RegisterOwnerService {
 
     private final RegisterOwnerRepository registerOwnerRepository;
-    private final AccountRepository accountRepository;
-    private final PasscodeRepository passcodeRepository;
     private final OwnerRepository ownerRepository;
     private final FieldRepository fieldRepository;
-    private final FieldImageService fieldImageService;
-    private final EmailService emailService;
-    private final KeycloakUtil keycloakUtil;
-    @Value("${file.upload-dir:uploads}")
-    private String uploadBaseDir;
-
-
-    @Override
-    public List<RegisterOwner> findAll() {
-        return registerOwnerRepository.findAll();
-    }
 
     @Override
     public RegisterOwner get(UUID id) {
         return registerOwnerRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn đăng ký!"));
-    }
-
-    @Override
-    public RegisterOwner create(RegisterOwnerRequest request) {
-        return null;
-//                saveRegisterOwner(new RegisterOwner(), request);
-    }
-
-    @Override
-    public RegisterOwner update(UUID id, RegisterOwnerRequest request) {
-        return null;
-//                saveRegisterOwner(get(id), request);
-    }
-
-//    private RegisterOwner saveRegisterOwner(RegisterOwner registerOwner, RegisterOwnerRequest request) {
-//        Account account = accountRepository.findById(request.accountId())
-//                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
-//        registerOwner.setAccount(account);
-//        registerOwner.setName(request.name());
-//        registerOwner.setAddress(request.address());
-//        registerOwner.setMobileContact(request.mobileContact());
-//        registerOwner.setGmail(request.gmail());
-//        registerOwner.setActive(request.active());
-//        registerOwner.setLinkMap(request.linkMap());
-//        registerOwner.setImgQr(storeBase64Image(request.imgQr(), uploadBaseDir, "register-owners"));
-//        return registerOwnerRepository.save(registerOwner);
-//    }
-
-    @Override
-    public void delete(UUID id) {
-        RegisterOwner registerOwner = get(id);
-        registerOwner.setDeletedAt(LocalDateTime.now());
-        registerOwnerRepository.save(registerOwner);
-    }
-
-    @Override
-    public RegisterOwnerResponse confirm(RegisterOwnerConfirmRequest request) {
-        Passcode passcode = passcodeRepository.findByAccount_Id(request.accountId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Passcode not found"));
-        if (passcode.getType() != TypePasscode.REGISTER_OWNER_CODE) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Passcode type invalid");
-        }
-        LocalDateTime now = LocalDateTime.now();
-        if (isExpired(passcode, now)) {
-            passcode.setActive(ActiveStatus.INACTIVE);
-            passcodeRepository.save(passcode);
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Passcode expired");
-        }
-        try {
-            applyUsageLimits(passcode, now);
-        } catch (ResponseStatusException ex) {
-            passcodeRepository.save(passcode);
-            throw ex;
-        }
-        if (!passcode.getCode().equals(request.code())) {
-            passcodeRepository.save(passcode);
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Passcode invalid");
-        }
-        passcode.setActive(ActiveStatus.INACTIVE);
-        passcodeRepository.save(passcode);
-
-        Account account = accountRepository.findById(request.accountId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found"));
-        RegisterOwnerDraft draft = request.register();
-
-        // Ensure owner record exists for this account
-        ownerRepository.findByAccount_Id(account.getId()).or(() -> {
-            Owner owner = new Owner();
-            owner.setAccount(account);
-            owner.setName(draft.name());
-            owner.setAvatar(null);
-            return Optional.of(ownerRepository.save(owner));
-        });
-
-        RegisterOwner registerOwner = new RegisterOwner();
-        registerOwner.setAccount(account);
-        registerOwner.setName(draft.name());
-        registerOwner.setAddress(draft.address());
-        registerOwner.setMobileContact(draft.mobileContact());
-        registerOwner.setGmail(account.getGmail());
-        registerOwner.setActive(RegisterStatus.PENDING);
-        registerOwner.setLinkMap(draft.linkMap());
-        registerOwner.setImgQr(storeBase64Image(draft.imgQr(), uploadBaseDir, "register-owners"));
-        RegisterOwner saved = registerOwnerRepository.save(registerOwner);
-        return new RegisterOwnerResponse(
-                saved.getId(),
-                account.getId(),
-                saved.getName(),
-                saved.getAddress(),
-                saved.getMobileContact(),
-                saved.getGmail(),
-                saved.getActive(),
-                saved.getLinkMap(),
-                saved.getImgQr()
-        );
     }
 
     @Override
@@ -228,9 +101,6 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
         field.setQuantity(0);
         field.setImgQr(registerOwner.getImgQr());
         Field savedField = fieldRepository.save(field);
-        if (registerOwner.getImgQr() != null) {
-            fieldImageService.create(savedField.getId(), TypeImage.QR, registerOwner.getImgQr());
-        }
 
         registerOwner.setActive(RegisterStatus.ACCEPT);
         registerOwnerRepository.save(registerOwner);
@@ -252,88 +122,4 @@ public class RegisterOwnerServiceImpl implements RegisterOwnerService {
         return new RegisterOwnerRejectResponse(registerOwner.getId(), registerOwner.getActive());
     }
 
-    private void applyUsageLimits(Passcode passcode, LocalDateTime now) {
-        LocalDateTime lastTime = passcode.getTime();
-        int totalDay = passcode.getTotalDay() == null ? 0 : passcode.getTotalDay();
-        int totalMonth = passcode.getTotalMonth() == null ? 0 : passcode.getTotalMonth();
-
-        if (lastTime == null || !isSameDay(lastTime, now)) {
-            totalDay = 0;
-        }
-        if (lastTime == null || !isSameMonth(lastTime, now)) {
-            totalMonth = 0;
-        }
-
-        // reset trạng thái khi bước sang ngày/tháng mới
-        passcode.setActive(ActiveStatus.ACTIVE);
-
-        if (totalDay >= 5) {
-            passcode.setActive(ActiveStatus.INACTIVE);
-            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Passcode daily limit exceeded");
-        }
-        if (totalMonth >= 15) {
-            passcode.setActive(ActiveStatus.INACTIVE);
-            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Passcode monthly limit exceeded");
-        }
-
-        totalDay++;
-        totalMonth++;
-        passcode.setTotalDay(totalDay);
-        passcode.setTotalMonth(totalMonth);
-        passcode.setTime(now);
-
-        if (totalDay > 5 || totalMonth > 15) {
-            passcode.setActive(ActiveStatus.INACTIVE);
-            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Passcode limit exceeded");
-        }
-    }
-
-    private boolean isSameDay(LocalDateTime a, LocalDateTime b) {
-        return a.toLocalDate().isEqual(b.toLocalDate());
-    }
-
-    private boolean isSameMonth(LocalDateTime a, LocalDateTime b) {
-        return a.getYear() == b.getYear() && a.getMonth() == b.getMonth();
-    }
-
-    private boolean isExpired(Passcode passcode, LocalDateTime now) {
-        LocalDateTime createdTime = passcode.getTime();
-        return createdTime == null || now.isAfter(createdTime.plusSeconds(60));
-    }
-
-    private String storeBase64Image(String dataUri, String baseDir, String subFolder) {
-        if (dataUri == null || dataUri.isBlank()) {
-            return null;
-        }
-        // Nếu đã là đường dẫn (http/https/local) thì giữ nguyên
-        String lower = dataUri.toLowerCase();
-        if (lower.startsWith("http://") || lower.startsWith("https://") || lower.startsWith("uploads/")) {
-            return dataUri;
-        }
-        String base64Part = dataUri;
-        String ext = ".png";
-        if (dataUri.startsWith("data:")) {
-            int comma = dataUri.indexOf(',');
-            if (comma > 0) {
-                String header = dataUri.substring(5, comma); // after data:
-                base64Part = dataUri.substring(comma + 1);
-                if (header.contains("jpeg")) {
-                    ext = ".jpg";
-                } else if (header.contains("png")) {
-                    ext = ".png";
-                }
-            }
-        }
-        byte[] bytes = Base64.getDecoder().decode(base64Part);
-        try {
-            Path dir = Path.of(baseDir, subFolder);
-            Files.createDirectories(dir);
-            String filename = UUID.randomUUID() + ext;
-            Path target = dir.resolve(filename);
-            Files.write(target, bytes, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-            return target.toString();
-        } catch (Exception ex) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Không lưu được ảnh QR", ex);
-        }
-    }
 }

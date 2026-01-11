@@ -78,7 +78,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Transactional
     public LoginResponseDto authentication(LoginRequestDto request) {
         Account account = accountRepository.findByGmailIgnoreCase(request.getUsername())
-                .orElseThrow(() ->  new ResponseStatusException(HttpStatus.NOT_FOUND, "Thông tin tài khoản không chính xác."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Thông tin tài khoản không chính xác."));
         User user = userRepository.findByAccount(account)
                 .orElse(null);
         Owner owner = ownerRepository.findByAccount(account)
@@ -86,14 +86,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         Admin admin = adminRepository.findByAccount(account)
                 .orElse(null);
 
-        if (user == null && owner == null && admin == null){
+        if (user == null && owner == null && admin == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Thông tin tài khoản không chính xác.");
         }
 
         UUID accountId;
-        if (user != null){
+        if (user != null) {
             accountId = user.getId();
-        } else if (owner != null){
+        } else if (owner != null) {
             accountId = owner.getId();
         } else {
             accountId = admin.getId();
@@ -137,8 +137,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         .accessToken(accessToken)
                         .refreshToken((String) body.get(REFRESH_TOKEN))
                         .build();
-            }
-            else {
+            } else {
                 log.error("Đăng nhập thất bại với username = {}", request.getUsername());
             }
         } catch (Exception ex) {
@@ -173,7 +172,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return "Mở khóa tài khoản thành công";
     }
 
-    private Account checkAccountLogin(String gmail, String password){
+    private Account checkAccountLogin(String gmail, String password) {
         Account account = accountRepository.findByGmailIgnoreCase(gmail)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Thông tin đăng nhập không chính xác!"));
         if (account.getDeletedAt() != null) {
@@ -240,7 +239,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new InvalidDataException("Email đã  tồn tại. Vui lòng tạo bằng email khác");
         }
 
-        Account account  = new Account();
+        Account account = new Account();
         account.setGmail(request.gmail());
         account.setPassword(passwordEncoder.encode(request.password()));
         account.setMsisdn(request.mobileContact());
@@ -273,7 +272,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public RegisterOwnerResponse verifyOtpToRegister(VerifyOtpRequestDto request, MultipartFile file) {
         PendingRegistrationRequestDto pending = pendingRegistrationRequestMap.get(request.getEmail());
 
-        if (pending == null){
+        if (pending == null) {
             throw new InvalidDataException(ErrorMessage.Auth.ERR_PENDING_REGISTER_REQUEST_NULL);
         }
 
@@ -499,7 +498,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new InvalidDataException("Email đã  tồn tại. Vui lòng tạo bằng email khác");
         }
 
-        Account account  = new Account();
+        Account account = new Account();
         account.setGmail(request.account().gmail());
         account.setPassword(passwordEncoder.encode(request.account().password()));
         account.setMsisdn(request.account().msisdn());

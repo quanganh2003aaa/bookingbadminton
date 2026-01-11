@@ -19,15 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface FieldService {
-    List<Field> findAll();
-
     Field get(UUID id);
-
-//    Field create(FieldRequest request);
-//
-//    Field update(UUID id, FieldRequest request);
-
-    void delete(UUID id);
 
     Page<FieldCardResponse> search(String search, Pageable pageable);
 

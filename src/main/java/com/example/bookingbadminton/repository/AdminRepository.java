@@ -9,7 +9,5 @@ import java.util.Optional;
 import java.util.UUID;
 @Repository
 public interface AdminRepository extends JpaRepository<Admin, UUID> {
-    Optional<Admin> findByAccount_Id(UUID accountId);
-
     Optional<Admin> findByAccount(Account account);
 }

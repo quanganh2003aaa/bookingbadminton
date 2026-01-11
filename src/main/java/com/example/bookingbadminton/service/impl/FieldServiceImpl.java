@@ -3,7 +3,6 @@ package com.example.bookingbadminton.service.impl;
 import com.example.bookingbadminton.model.Enum.ActiveStatus;
 import com.example.bookingbadminton.model.Enum.BookingStatus;
 import com.example.bookingbadminton.model.entity.Field;
-import com.example.bookingbadminton.model.entity.FieldImage;
 import com.example.bookingbadminton.model.entity.Owner;
 import com.example.bookingbadminton.model.entity.TimeSlot;
 import com.example.bookingbadminton.payload.FieldAdminResponse;
@@ -19,7 +18,6 @@ import com.example.bookingbadminton.payload.request.ValidOwnerRequest;
 import com.example.bookingbadminton.repository.BookingFieldRepository;
 import com.example.bookingbadminton.repository.BookingRepository;
 import com.example.bookingbadminton.repository.CommentRepository;
-import com.example.bookingbadminton.repository.FieldImageRepository;
 import com.example.bookingbadminton.repository.FieldRepository;
 import com.example.bookingbadminton.repository.OwnerRepository;
 import com.example.bookingbadminton.repository.TimeSlotRepository;
@@ -43,62 +41,15 @@ public class FieldServiceImpl implements FieldService {
 
     private final FieldRepository fieldRepository;
     private final OwnerRepository ownerRepository;
-    private final FieldImageRepository fieldImageRepository;
     private final CommentRepository commentRepository;
     private final TimeSlotRepository timeSlotRepository;
     private final BookingFieldRepository bookingFieldRepository;
     private final BookingRepository bookingRepository;
 
     @Override
-    public List<Field> findAll() {
-        return fieldRepository.findAll();
-    }
-
-    @Override
     public Field get(UUID id) {
         return fieldRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sân!"));
-    }
-
-//    @Override
-//    public Field create(FieldRequest request) {
-//        return saveField(new Field(), request);
-//    }
-//
-//    @Override
-//    public Field update(UUID id, FieldRequest request) {
-//        return saveField(get(id), request);
-//    }
-
-//    private Field saveField(Field field, FieldRequest request) {
-//        Owner owner = ownerRepository.findById(request.ownerId())
-//                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy chủ quản lý."));
-//        field.setOwner(owner);
-//        field.setName(request.name());
-//        field.setAddress(request.address());
-//        field.setQuantity(request.quantity());
-//        if (field.getIndexField() == null) {
-//            field.setIndexField(0);
-//        }
-//        field.setMsisdn(request.msisdn());
-//        field.setMobileContact(request.mobileContact());
-//        field.setStartTime(request.startTime());
-//        field.setEndTime(request.endTime());
-//        field.setActive(request.active());
-//        field.setLinkMap(request.linkMap());
-//        Field saved = fieldRepository.save(field);
-//        ensureTimeSlotsAlign(saved);
-//        if (field.getParentField() == null && request.quantity() != null) {
-//            syncSubFields(saved, request.quantity());
-//        }
-//        return saved;
-//    }
-
-    @Override
-    public void delete(UUID id) {
-        Field field = get(id);
-        field.setDeletedAt(LocalDateTime.now());
-        fieldRepository.save(field);
     }
 
     @Override
@@ -322,7 +273,8 @@ public class FieldServiceImpl implements FieldService {
                 field.getAddress(),
                 field.getQuantity(),
                 averageRate,
-                totalComments
+                totalComments,
+                field.getActive()
         );
     }
 

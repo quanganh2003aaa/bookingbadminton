@@ -1,18 +1,11 @@
 package com.example.bookingbadminton.controller;
 
 import com.example.bookingbadminton.payload.ApiResponse;
-import com.example.bookingbadminton.payload.DetailInfoOwnerResp;
 import com.example.bookingbadminton.payload.DetailInfoUserResp;
-import com.example.bookingbadminton.payload.UserRequest;
-import com.example.bookingbadminton.payload.request.ValidOwnerRequest;
 import com.example.bookingbadminton.payload.request.ValidUserRequest;
-import com.example.bookingbadminton.service.AuthenticationService;
 import com.example.bookingbadminton.service.UserService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/users")

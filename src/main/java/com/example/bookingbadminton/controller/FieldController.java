@@ -2,25 +2,16 @@ package com.example.bookingbadminton.controller;
 
 import com.example.bookingbadminton.payload.ApiResponse;
 import com.example.bookingbadminton.payload.FieldCardResponse;
-import com.example.bookingbadminton.payload.FieldOwnerDetailResponse;
-import com.example.bookingbadminton.payload.FieldOwnerDailyBookingResponse;
 import com.example.bookingbadminton.payload.FieldUserDetailResponse;
 import com.example.bookingbadminton.payload.FieldRequest;
 import com.example.bookingbadminton.payload.PageResponse;
-import com.example.bookingbadminton.model.Enum.TypeImage;
-import com.example.bookingbadminton.payload.request.ValidOwnerRequest;
 import com.example.bookingbadminton.service.FieldService;
-import com.example.bookingbadminton.service.FieldImageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
 import java.util.UUID;
 
 @RestController
@@ -29,7 +20,6 @@ import java.util.UUID;
 public class FieldController {
 
     private final FieldService fieldService;
-    private final FieldImageService fieldImageService;
 
     //TODO API danh sách sân (trang chủ) - PUBLIC
     @GetMapping
@@ -61,33 +51,5 @@ public class FieldController {
         return ApiResponse.builder().result(new QuantityResponse(field.getQuantity())).build();
     }
 
-    @PostMapping("/{id}/images")
-    public ResponseEntity<ApiResponse> addImage(@PathVariable UUID id, @RequestBody FieldImageAddRequest request) {
-        var saved = fieldImageService.create(id, request.type(), request.image());
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.builder().result(saved).build());
-    }
-
-    @PostMapping("/{id}/images/upload")
-    public ResponseEntity<ApiResponse> uploadImage(@PathVariable UUID id,
-                                                   @RequestParam(defaultValue = "USING") TypeImage type,
-                                                   @RequestParam("file") MultipartFile file) {
-        var saved = fieldImageService.upload(id, type, file);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.builder().result(saved).build());
-    }
-
-    @GetMapping("/{id}/images")
-    public ApiResponse listImages(@PathVariable UUID id) {
-        return ApiResponse.builder().result(fieldImageService.listByField(id)).build();
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        fieldService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    public record FieldImageAddRequest(TypeImage type, String image) {}
     public record QuantityResponse(Integer quantity) {}
 }

@@ -13,7 +13,6 @@ import com.example.bookingbadminton.model.dto.response.ResponseData;
 import com.example.bookingbadminton.model.dto.response.auth.AccountResponseDto;
 import com.example.bookingbadminton.model.dto.response.auth.LoginResponseDto;
 import com.example.bookingbadminton.model.dto.response.auth.RefreshTokenResponseDto;
-import com.example.bookingbadminton.payload.ApiResponse;
 import com.example.bookingbadminton.payload.RegisterOwnerRequest;
 import com.example.bookingbadminton.payload.RegisterOwnerResponse;
 import com.example.bookingbadminton.payload.request.RegisterUserRequest;

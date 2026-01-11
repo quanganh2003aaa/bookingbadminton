@@ -10,7 +10,6 @@ import java.util.UUID;
 @Repository
 public interface AccountRepository extends JpaRepository<Account, UUID> {
     boolean existsByGmailIgnoreCase(String gmail);
-    boolean existsByMsisdn(String msisdn);
     Optional<Account> findByGmailIgnoreCase(String gmail);
     Optional<Account> findByKeycloakUserId(String keycloakUserId);
 }

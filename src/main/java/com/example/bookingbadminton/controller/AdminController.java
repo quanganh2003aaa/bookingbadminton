@@ -1,9 +1,7 @@
 package com.example.bookingbadminton.controller;
 
 import com.example.bookingbadminton.model.Enum.RegisterStatus;
-import com.example.bookingbadminton.model.entity.Admin;
 import com.example.bookingbadminton.payload.*;
-import com.example.bookingbadminton.service.AdminService;
 import com.example.bookingbadminton.service.FieldService;
 import com.example.bookingbadminton.service.RegisterOwnerService;
 import com.example.bookingbadminton.service.UserService;
@@ -11,8 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -22,7 +18,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AdminController {
 
-    private final AdminService adminService;
     private final UserService userService;
     private final FieldService fieldService;
     private final RegisterOwnerService registerOwnerService;
@@ -81,8 +76,5 @@ public class AdminController {
     public ApiResponse detailFieldAdmin(@PathVariable UUID id) {
         FieldDetailResponse detail = fieldService.detail(id);
         return ApiResponse.builder().result(detail).build();
-    }
-
-    public record CreateAdminRequest(UUID accountId, String name) {
     }
 }

@@ -15,13 +15,6 @@ import java.util.List;
 public interface BookingRepository extends JpaRepository<Booking, UUID> {
     Optional<Booking> findById(UUID id);
     @Query("""
-            SELECT bf.field.id, COUNT(bf) FROM BookingField bf
-            WHERE bf.startHour >= :startOfDay AND bf.startHour < :endOfDay
-            GROUP BY bf.field.id
-            """)
-    List<Object[]> countByFieldInDay(@Param("startOfDay") LocalDateTime startOfDay, @Param("endOfDay") LocalDateTime endOfDay);
-
-    @Query("""
             SELECT COALESCE(f.parentField.id, f.id) AS parentId, COUNT(bf) FROM BookingField bf
             JOIN bf.field f
             WHERE bf.startHour >= :startOfDay AND bf.startHour < :endOfDay
@@ -29,19 +22,6 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
             """)
     List<Object[]> countByParentFieldInDay(@Param("startOfDay") LocalDateTime startOfDay,
                                            @Param("endOfDay") LocalDateTime endOfDay);
-
-    @Query("""
-            SELECT DISTINCT bf.booking FROM BookingField bf
-            WHERE bf.startHour >= :start AND bf.startHour < :end
-            """)
-    List<Booking> findByStartHourBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
-
-    @Query("""
-            SELECT DISTINCT bf.booking FROM BookingField bf
-            WHERE bf.field.id = :fieldId
-              AND bf.startHour >= :start AND bf.startHour < :end
-            """)
-    List<Booking> findByField_IdAndStartHourBetween(@Param("fieldId") UUID fieldId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
     List<Booking> findByUser_IdAndDeletedAtIsNullOrderByCreatedAtDesc(UUID userId);
 }

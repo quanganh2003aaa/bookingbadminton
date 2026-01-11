@@ -11,5 +11,4 @@ import java.util.UUID;
 @Repository
 public interface PasscodeRepository extends JpaRepository<Passcode, UUID> {
     Optional<Passcode> findByAccount_Id(UUID accountId);
-    Optional<Passcode> findTopByAccount_IdAndTypeAndActiveOrderByTimeDesc(UUID accountId, TypePasscode type, ActiveStatus active);
 }

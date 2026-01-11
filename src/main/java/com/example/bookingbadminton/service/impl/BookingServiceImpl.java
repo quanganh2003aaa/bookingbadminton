@@ -355,6 +355,41 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    public PaidBookingDetailResponse paidBookingDetail(UUID bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy thông tin đơn đặt sân."));
+
+        if (booking.getBookingField() == null || booking.getBookingField().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy thông tin đơn đặt sân.");
+        }
+
+        Invoice invoice = invoiceRepository.findByBooking(booking)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy hóa đơn."));
+
+        List<PaidBookingDetailResponse.BookingSlot> slots = booking.getBookingField().stream()
+                .sorted(Comparator.comparing(BookingField::getStartHour))
+                .map(bf -> new PaidBookingDetailResponse.BookingSlot(
+                        bf.getField() != null ? bf.getField().getId() : null,
+                        bf.getField() != null ? bf.getField().getIndexField() : null,
+                        bf.getStartHour(),
+                        bf.getEndHour()
+                ))
+                .toList();
+
+        return new PaidBookingDetailResponse(
+                booking.getId(),
+                booking.getUser() != null ? booking.getUser().getName() : null,
+                booking.getMsisdn(),
+                booking.getStatus(),
+                invoice.getStatus(),
+                booking.getCreatedAt(),
+                invoice.getPrice() != null ? invoice.getPrice() : booking.getTotalAmount(),
+                invoice.getImgPayment(),
+                slots
+        );
+    }
+
+    @Override
     public List<UserBookingSummaryResponse> userBookings(UUID userId) {
         List<Booking> bookings = bookingRepository.findByUser_IdAndDeletedAtIsNullOrderByCreatedAtDesc(userId);
         List<UserBookingSummaryResponse> responses = new ArrayList<>();
