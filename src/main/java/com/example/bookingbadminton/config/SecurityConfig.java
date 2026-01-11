@@ -62,6 +62,7 @@ public class SecurityConfig {
                                 .requestMatchers(adminEndpoints).hasAnyAuthority(RoleConstant.ADMIN)
                                 .requestMatchers(ownerEndpoints).hasAnyAuthority(RoleConstant.OWNER)
                                 .requestMatchers(publicEndpoints).permitAll()
+                                .anyRequest().authenticated()
                 )
                 .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         httpSecurity.oauth2ResourceServer(oauth2 ->
