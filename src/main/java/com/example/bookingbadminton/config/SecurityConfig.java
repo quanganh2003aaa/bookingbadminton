@@ -1,9 +1,11 @@
 package com.example.bookingbadminton.config;
 
+import com.example.bookingbadminton.constant.RoleConstant;
 import com.example.bookingbadminton.security.CustomUserDetailsService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -30,13 +32,37 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
     final CustomUserDetailsService customUserDetailsService;
 
+    @Value("${security.public-endpoints}")
+    String[] publicEndpoints;
+
+    @Value("${security.user-endpoints}")
+    String[] userEndpoints;
+
+    @Value("${security.admin-endpoints}")
+    String[] adminEndpoints;
+
+    @Value("${security.owner-endpoints}")
+    String[] ownerEndpoints;
+
     @Bean
     public SecurityFilterChain configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(
                         authorizationManagerRequestMatcherRegistry -> authorizationManagerRequestMatcherRegistry
-                                .requestMatchers("/**").permitAll())
+                                .requestMatchers("/api/passcodes/register-owner").permitAll()
+                                .requestMatchers("/api/accounts/login/owner").permitAll()
+                                .requestMatchers("/api/accounts/**/unlock").hasAnyAuthority(RoleConstant.ADMIN)
+                                .requestMatchers("/api/accounts/**/lock").hasAnyAuthority(RoleConstant.ADMIN)
+                                .requestMatchers("/api/accounts/**/lock").hasAnyAuthority(RoleConstant.ADMIN)
+                                .requestMatchers("/api/fields/**").permitAll()
+                                .requestMatchers("/api/bookings/**").permitAll()
+                                .requestMatchers("/api/time-slots/**").permitAll()
+                                .requestMatchers(userEndpoints).hasAnyAuthority(RoleConstant.USER, RoleConstant.ADMIN, RoleConstant.OWNER)
+                                .requestMatchers(adminEndpoints).hasAnyAuthority(RoleConstant.ADMIN)
+                                .requestMatchers(ownerEndpoints).hasAnyAuthority(RoleConstant.OWNER)
+                                .requestMatchers(publicEndpoints).permitAll()
+                )
                 .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         httpSecurity.oauth2ResourceServer(oauth2 ->
                 oauth2.jwt(jwt ->
