@@ -42,4 +42,6 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
               AND bf.startHour >= :start AND bf.startHour < :end
             """)
     List<Booking> findByField_IdAndStartHourBetween(@Param("fieldId") UUID fieldId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    List<Booking> findByUser_IdAndDeletedAtIsNullOrderByCreatedAtDesc(UUID userId);
 }

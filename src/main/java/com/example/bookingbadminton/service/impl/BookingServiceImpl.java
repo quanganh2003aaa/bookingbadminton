@@ -4,7 +4,13 @@ import com.example.bookingbadminton.exception.ResourceNotFoundException;
 import com.example.bookingbadminton.model.Enum.BookingStatus;
 import com.example.bookingbadminton.model.Enum.InvoiceStatus;
 import com.example.bookingbadminton.model.entity.*;
-import com.example.bookingbadminton.payload.*;
+import com.example.bookingbadminton.payload.FieldOwnerBookingListResponse;
+import com.example.bookingbadminton.payload.FieldOwnerDailyBookingResponse;
+import com.example.bookingbadminton.payload.PaidBookingDetailResponse;
+import com.example.bookingbadminton.payload.TempBookingRequest;
+import com.example.bookingbadminton.payload.TempBookingResponse;
+import com.example.bookingbadminton.payload.UserBookingDetailResponse;
+import com.example.bookingbadminton.payload.UserBookingSummaryResponse;
 import com.example.bookingbadminton.payload.request.ValidOwnerAndFieldRequest;
 import com.example.bookingbadminton.repository.*;
 import com.example.bookingbadminton.service.BookingService;
@@ -342,42 +348,77 @@ public class BookingServiceImpl implements BookingService {
             ));
         }
 
+
         responses.sort(Comparator.comparing(FieldOwnerBookingListResponse::createdAt,
                 Comparator.nullsLast(LocalDateTime::compareTo)).reversed());
         return responses;
     }
 
     @Override
-    public PaidBookingDetailResponse paidBookingDetail(UUID bookingId) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn đặt sân!"));
-        Invoice invoice = invoiceRepository.findByBooking(booking)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy hóa đơn!"));
-        if (!InvoiceStatus.PAY.equals(invoice.getStatus())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Đơn này chưa thanh toán hoặc không ở trạng thái PAY.");
+    public List<UserBookingSummaryResponse> userBookings(UUID userId) {
+        List<Booking> bookings = bookingRepository.findByUser_IdAndDeletedAtIsNullOrderByCreatedAtDesc(userId);
+        List<UserBookingSummaryResponse> responses = new ArrayList<>();
+        for (Booking booking : bookings) {
+            if (booking.getBookingField() == null || booking.getBookingField().isEmpty()) {
+                continue;
+            }
+            LocalDate date = booking.getBookingField().get(0).getStartHour().toLocalDate();
+            LocalDateTime minStart = booking.getBookingField().stream()
+                    .map(BookingField::getStartHour)
+                    .min(LocalDateTime::compareTo)
+                    .orElse(null);
+            LocalDateTime maxEnd = booking.getBookingField().stream()
+                    .map(BookingField::getEndHour)
+                    .max(LocalDateTime::compareTo)
+                    .orElse(null);
+            String timeRange = "";
+            if (minStart != null && maxEnd != null) {
+                timeRange = String.format("%02d:%02d - %02d:%02d",
+                        minStart.getHour(), minStart.getMinute(),
+                        maxEnd.getHour(), maxEnd.getMinute());
+            }
+            responses.add(new UserBookingSummaryResponse(
+                    booking.getId(),
+                    booking.getField() != null ? booking.getField().getName() : null,
+                    date,
+                    timeRange,
+                    booking.getStatus()
+            ));
         }
+        return responses;
+    }
 
-        List<PaidBookingDetailResponse.BookingSlot> slots = booking.getBookingField() == null ? List.of() :
-                booking.getBookingField().stream()
-                        .filter(bf -> bf.getField() == null || bf.getField().getDeletedAt() == null)
-                        .map(bf -> new PaidBookingDetailResponse.BookingSlot(
-                                bf.getField() != null ? bf.getField().getId() : null,
-                                bf.getField().getIndexField(),
-                                bf.getStartHour(),
-                                bf.getEndHour()
-                        ))
-                        .toList();
-
-        return new PaidBookingDetailResponse(
+    @Override
+    public UserBookingDetailResponse userBookingDetail(UUID bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kh?ng t?m th?y ??n ??t s?n!"));
+        if (booking.getBookingField() == null || booking.getBookingField().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "??n ??t s?n kh?ng c? l?ch ??t.");
+        }
+        LocalDate date = booking.getBookingField().get(0).getStartHour().toLocalDate();
+        LocalDateTime minStart = booking.getBookingField().stream()
+                .map(BookingField::getStartHour)
+                .min(LocalDateTime::compareTo)
+                .orElse(null);
+        LocalDateTime maxEnd = booking.getBookingField().stream()
+                .map(BookingField::getEndHour)
+                .max(LocalDateTime::compareTo)
+                .orElse(null);
+        String timeRange = "";
+        if (minStart != null && maxEnd != null) {
+            timeRange = String.format("%02d:%02d - %02d:%02d",
+                    minStart.getHour(), minStart.getMinute(),
+                    maxEnd.getHour(), maxEnd.getMinute());
+        }
+        Field field = booking.getField();
+        return new UserBookingDetailResponse(
                 booking.getId(),
-                booking.getUser() != null ? booking.getUser().getName() : null,
-                booking.getMsisdn(),
-                booking.getStatus(),
-                invoice.getStatus(),
-                booking.getCreatedAt(),
-                invoice.getPrice(),
-                invoice.getImgPayment(),
-                slots
+                field != null ? field.getName() : null,
+                field != null ? field.getAddress() : null,
+                field != null ? field.getMobileContact() : null,
+                date,
+                timeRange,
+                booking.getStatus()
         );
     }
 

@@ -7,6 +7,8 @@ import com.example.bookingbadminton.payload.FieldOwnerDailyBookingResponse;
 import com.example.bookingbadminton.payload.PaidBookingDetailResponse;
 import com.example.bookingbadminton.payload.TempBookingRequest;
 import com.example.bookingbadminton.payload.TempBookingResponse;
+import com.example.bookingbadminton.payload.UserBookingDetailResponse;
+import com.example.bookingbadminton.payload.UserBookingSummaryResponse;
 import com.example.bookingbadminton.payload.request.ValidOwnerAndFieldRequest;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,6 +31,10 @@ public interface BookingService {
     List<FieldOwnerBookingListResponse> ownerListBookings(UUID parentFieldId, LocalDate date);
 
     PaidBookingDetailResponse paidBookingDetail(UUID bookingId);
+
+    List<UserBookingSummaryResponse> userBookings(UUID userId);
+
+    UserBookingDetailResponse userBookingDetail(UUID bookingId);
 
 //    List<BookingByDayResponse> findByDay(java.time.LocalDate date);
 //
