@@ -55,9 +55,7 @@ public class AuthenticationController {
     }
 
     @PostMapping(value = "/register-owner", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ResponseData<Void>> registerOwner(
-            @RequestBody @Valid RegisterOwnerRequest request
-    ) {
+    public ResponseEntity<ResponseData<Void>> registerOwner(@RequestBody @Valid RegisterOwnerRequest request) {
         authenticationService.registerOwner(request);
         return ResponseUtil.success(HttpStatus.OK, SuccessMessage.Auth.REGISTER_SEND_OTP_SUCCESS);
     }

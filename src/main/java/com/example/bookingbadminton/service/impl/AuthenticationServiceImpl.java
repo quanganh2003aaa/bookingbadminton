@@ -43,10 +43,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.example.bookingbadminton.constant.CommonConstant.*;
@@ -197,6 +194,29 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     @Transactional
     public void registerOwner(RegisterOwnerRequest request) {
+        String otp = OtpUtil.generateOtp();
+        Optional<Account> accountOpt = accountRepository.findByGmailIgnoreCase(request.gmail());
+        if (accountOpt.isPresent()) {
+            Optional<Passcode> passcodeOpt = passcodeRepository.findByAccount_Id(accountOpt.get().getId());
+            Passcode passcode = null;
+            if (passcodeOpt.isPresent()) {
+                passcode = passcodeOpt.get();
+                passcode.setCode(otp);
+                passcode.setTime(LocalDateTime.now().plusMinutes(5));
+                passcode.setActive(ActiveStatus.ACTIVE);
+                passcode.setTotalDay(passcode.getTotalDay() + 1);
+                passcode.setTotalMonth(passcode.getTotalMonth() + 1);
+                passcode.setType(TypePasscode.REGISTER_OWNER_CODE);
+                passcodeRepository.save(passcode);
+            }
+
+            PendingRegistrationRequestDto pending = new PendingRegistrationRequestDto();
+            pending.setRequest(request);
+            pending.setPasscode(passcode);
+            pendingRegistrationRequestMap.put(request.gmail(), pending);
+            emailService.sendRegistrationOtpByEmail(request.gmail(), request.nameOwner(), otp);
+            return;
+        }
 
         final String url = keycloakProperties.serverUrl() + "admin/realms/" + keycloakProperties.realm() + "/users";
 
@@ -243,22 +263,15 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new KeycloakException(ex.getMessage());
         }
 
-        String otp = OtpUtil.generateOtp();
-
-        if (accountRepository.existsByGmailIgnoreCase(request.gmail())) {
-            throw new InvalidDataException("Email đã  tồn tại. Vui lòng tạo bằng email khác");
-        }
-
         Account account = new Account();
         account.setGmail(request.gmail());
         account.setPassword(passwordEncoder.encode(request.password()));
         account.setMsisdn(request.mobileContact());
         account.setKeycloakUserId(userId);
-
         accountRepository.save(account);
 
         Passcode passcode = new Passcode();
-        passcode.setAccount(account);
+        passcode.setAccount(accountOpt.get());
         passcode.setCode(otp);
         passcode.setTime(LocalDateTime.now().plusMinutes(5));
         passcode.setActive(ActiveStatus.ACTIVE);
@@ -268,13 +281,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         passcodeRepository.save(passcode);
 
         PendingRegistrationRequestDto pending = new PendingRegistrationRequestDto();
-
         pending.setRequest(request);
         pending.setPasscode(passcode);
-
         pendingRegistrationRequestMap.put(request.gmail(), pending);
-
         emailService.sendRegistrationOtpByEmail(request.gmail(), request.nameOwner(), otp);
+
     }
 
     @Override
@@ -313,7 +324,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         registerOwner.setActive(RegisterStatus.PENDING);
         registerOwner.setAccount(pending.getPasscode().getAccount());
         registerOwner.setAddress(req.address());
-        registerOwner.setName(req.nameOwner());
+        registerOwner.setName(req.name());
         registerOwner.setImgQr(imageQrSecure);
         registerOwner.setLinkMap(req.linkMap());
         registerOwner.setMobileContact(req.mobileContact());
