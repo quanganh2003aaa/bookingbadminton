@@ -65,10 +65,11 @@ public class FieldServiceImpl implements FieldService {
     @Override
     public Page<FieldAdminResponse> adminList(String search, Pageable pageable) {
         Page<Field> page = fieldRepository.findByFilters(search, pageable);
+        Long count = fieldRepository.countFindByFilters(search);
         List<Field> parents = page.getContent().stream()
                 .filter(f -> f.getParentField() == null)
                 .toList();
-        Page<Field> filtered = new PageImpl<>(parents, pageable, parents.size());
+        Page<Field> filtered = new PageImpl<>(parents, pageable, count);
         return filtered.map(f -> new FieldAdminResponse(
                 f.getId(),
                 f.getName(),

@@ -18,14 +18,19 @@ public interface FieldRepository extends JpaRepository<Field, UUID> {
 
     @Query("""
             SELECT f FROM Field f
-            JOIN f.owner o
-            JOIN o.account a
-            WHERE (:search IS NULL OR :search = '' OR
-                   LOWER(f.name) LIKE LOWER(CONCAT('%', :search, '%')) OR
-                   LOWER(a.gmail) LIKE LOWER(CONCAT('%', :search, '%')))
+            WHERE f.parentField IS NULL
+             AND (:search IS NULL OR :search = '' OR
+                   LOWER(f.name) LIKE LOWER(CONCAT('%', :search, '%')))
             """)
     Page<Field> findByFilters(@Param("search") String search, Pageable pageable);
 
+    @Query("""
+             SELECT COUNT(f) FROM Field f
+            WHERE f.parentField IS NULL
+             AND (:search IS NULL OR :search = '' OR
+                   LOWER(f.name) LIKE LOWER(CONCAT('%', :search, '%')))
+            """)
+    Long countFindByFilters(@Param("search") String search);
     Page<Field> findByOwner_IdAndParentFieldIsNull(UUID ownerId, Pageable pageable);
 
     List<Field> findByParentField_IdOrderByIndexFieldAsc(UUID parentId);
