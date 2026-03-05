@@ -55,11 +55,7 @@ public class FieldServiceImpl implements FieldService {
     @Override
     public Page<FieldCardResponse> search(String search, Pageable pageable) {
         Page<Field> page = fieldRepository.findByFiltersForUser(search, ActiveStatus.ACTIVE, pageable);
-        List<Field> parents = page.getContent().stream()
-                .filter(f -> f.getParentField() == null)
-                .toList();
-        Page<Field> filtered = new PageImpl<>(parents, pageable, parents.size());
-        return filtered.map(this::toCardResponse);
+        return page.map(this::toCardResponse);
     }
 
     @Override
